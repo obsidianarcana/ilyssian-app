@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- deploy nudge -->
+<!-- Ilyssian v1.1.0 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -80,6 +80,11 @@
   #modeToggle button.on { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
   #btnDelete { padding: 5px 10px; font-size: 13px; }
   #btnDelete:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+  #btnMove { padding: 5px 10px; font-size: 13px; }
+  .f-act { margin-left: 4px; color: var(--fg2); font-size: 12px; padding: 1px 5px; border-radius: 4px; flex: 0 0 auto; }
+  .f-act:hover { color: #fff; background: var(--bg3); }
+  .f-first { margin-left: auto; }
 
   #editor { flex: 1; width: 100%; resize: none; border: none; outline: none; background: var(--bg0); color: var(--fg0); font-family: var(--mono); font-size: 15px; line-height: 1.7; padding: 12px 16px 40vh; display: none; }
   #preview { flex: 1; overflow-y: auto; padding: 12px 16px 40vh; display: none; max-width: 100%; -webkit-overflow-scrolling: touch; }
@@ -167,7 +172,7 @@
     <div id="panes">
       <div class="pane active" id="pane-files">
         <div id="newNoteRow">
-          <input id="newNoteName" placeholder="folder/Note name" spellcheck="false">
+          <input id="newNoteName" placeholder="folder/Note — new folders auto-create" spellcheck="false">
         </div>
         <div id="tree"></div>
       </div>
@@ -208,6 +213,7 @@
         <button id="btnEdit">Edit</button>
         <button id="btnPreview" class="on">Read</button>
       </div>
+      <button id="btnMove" title="Move / rename this note">✎</button>
       <button id="btnDelete" title="Delete this note">🗑</button>
     </div>
     <textarea id="editor" spellcheck="false"></textarea>
@@ -611,18 +617,25 @@ function renderTree() {
     node.files.push(p);
   }
   const el = $("tree"); el.innerHTML = "";
-  el.appendChild(buildTreeDom(root));
+  el.appendChild(buildTreeDom(root, ""));
 }
 
-function buildTreeDom(node) {
+function buildTreeDom(node, prefix) {
   const frag = document.createDocumentFragment();
   for (const [name, child] of [...node.folders.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    const full = prefix ? prefix + "/" + name : name;
     const d = document.createElement("div"); d.className = "tree-folder";
     const label = document.createElement("div"); label.className = "tree-label";
-    label.innerHTML = '<span class="caret">▾</span>📁 ' + escapeHtml(name);
-    label.onclick = () => d.classList.toggle("collapsed");
+    label.innerHTML = '<span class="caret">▾</span>📁 ' + escapeHtml(name) +
+      '<span class="f-act f-first" data-act="ren" title="Rename / move folder">✎</span>' +
+      '<span class="f-act" data-act="del" title="Delete folder">🗑</span>';
+    label.onclick = (e) => {
+      const act = e.target.closest(".f-act");
+      if (act) { e.stopPropagation(); if (act.dataset.act === "ren") renameFolderPrompt(full); else deleteFolderPrompt(full); return; }
+      d.classList.toggle("collapsed");
+    };
     const kids = document.createElement("div"); kids.className = "tree-children";
-    kids.appendChild(buildTreeDom(child));
+    kids.appendChild(buildTreeDom(child, full));
     d.appendChild(label); d.appendChild(kids); frag.appendChild(d);
   }
   for (const p of node.files) {
@@ -763,6 +776,99 @@ async function createNote(path, content) {
     return path;
   } catch (e) { alert("Create failed: " + e.message); return null; }
   finally { busy(false); }
+}
+
+function validPath(p) {
+  p = p.replace(/^\/+|\/+$/g, "").trim();
+  if (!p || p.split("/").some(seg => !seg.trim() || seg.startsWith("."))) return null;
+  return p;
+}
+
+async function moveNote(oldPath, newPathRaw) {
+  let newPath = validPath(newPathRaw);
+  if (!newPath) { alert("Invalid path."); return false; }
+  if (!/\.md$/i.test(newPath)) newPath += ".md";
+  if (newPath === oldPath) return true;
+  if (state.contents.has(newPath)) { alert("A note already exists at " + newPath); return false; }
+  const text = state.contents.get(oldPath);
+  const msg = "Move " + oldPath + " to " + newPath + " (Ilyssian)";
+  busy(true);
+  try {
+    const res = await gh("/repos/" + state.cfg.repo + "/contents/" + encodePath(newPath), {
+      method: "PUT",
+      body: JSON.stringify({ message: msg, content: utf8ToB64(text), branch: state.cfg.branch }),
+    });
+    const data = await res.json();
+    await gh("/repos/" + state.cfg.repo + "/contents/" + encodePath(oldPath), {
+      method: "DELETE",
+      body: JSON.stringify({ message: msg, sha: state.shas.get(oldPath), branch: state.cfg.branch }),
+    });
+    state.contents.delete(oldPath); state.shas.delete(oldPath);
+    state.contents.set(newPath, text); state.shas.set(newPath, data.content.sha);
+    if (state.current === oldPath) {
+      state.current = newPath;
+      $("noteTitle").textContent = baseName(newPath);
+      $("notePath").textContent = newPath;
+    }
+    state.index = buildIndex(state.contents);
+    renderTree(); renderTags(); renderRightbar(); markCurrentInTree();
+    toast("Moved to " + newPath);
+    return true;
+  } catch (e) { alert("Move failed: " + e.message + " — press ⟳ to resync."); return false; }
+  finally { busy(false); }
+}
+
+async function moveCurrentPrompt() {
+  if (!state.current) return;
+  const np = prompt("New path for this note.\nFolders in the path are created automatically.", state.current);
+  if (np) await moveNote(state.current, np);
+}
+
+function filesUnder(prefix) {
+  return [...state.contents.keys()].filter(p => p.startsWith(prefix + "/"));
+}
+
+async function renameFolderPrompt(prefix) {
+  const np = prompt("New path for this folder (moves every note inside):", prefix);
+  if (!np) return;
+  const clean = validPath(np);
+  if (!clean) { alert("Invalid folder path."); return; }
+  if (clean === prefix) return;
+  const files = filesUnder(prefix);
+  if (!files.length) { alert("Folder appears empty."); return; }
+  if (!confirm("Move " + files.length + " note(s) from \"" + prefix + "\" to \"" + clean + "\"?")) return;
+  for (const f of files) {
+    const ok = await moveNote(f, clean + f.slice(prefix.length));
+    if (!ok) { alert("Stopped at " + f + ". Press ⟳ to resync."); return; }
+  }
+  toast("Folder moved to " + clean);
+}
+
+async function deleteFolderPrompt(prefix) {
+  const files = filesUnder(prefix);
+  if (!files.length) { alert("Folder appears empty."); return; }
+  if (!confirm("Delete folder \"" + prefix + "\" and ALL " + files.length + " note(s) inside?\n\nEvery version stays in GitHub history, but they leave the vault now.")) return;
+  busy(true);
+  try {
+    for (const f of files) {
+      await gh("/repos/" + state.cfg.repo + "/contents/" + encodePath(f), {
+        method: "DELETE",
+        body: JSON.stringify({ message: "Delete " + f + " (Ilyssian)", sha: state.shas.get(f), branch: state.cfg.branch }),
+      });
+      state.contents.delete(f); state.shas.delete(f);
+    }
+  } catch (e) { alert("Delete stopped partway: " + e.message + " — press ⟳ to resync."); }
+  finally {
+    if (state.current && !state.contents.has(state.current)) {
+      state.current = null; state.dirty = false;
+      $("noteHeader").style.display = "none"; $("editor").style.display = "none"; $("preview").style.display = "none";
+    }
+    state.index = buildIndex(state.contents);
+    renderTree(); renderTags(); renderRightbar(); updateSaveState();
+    $("vaultName").textContent = state.cfg.repo.split("/")[1] + " · " + state.contents.size + " notes";
+    busy(false);
+    toast("Folder deleted");
+  }
 }
 
 async function deleteCurrent() {
@@ -1074,6 +1180,7 @@ function wire() {
   $("btnGraph").onclick = () => { graph.open ? closeGraph() : openGraph(); };
   $("graphClose").onclick = closeGraph;
   $("btnDelete").onclick = deleteCurrent;
+  $("btnMove").onclick = moveCurrentPrompt;
   $("btnEdit").onclick = () => setMode("edit");
   $("btnPreview").onclick = () => setMode("preview");
   $("btnPanel").onclick = () => $("sidebar").classList.contains("open") ? closePanels() : openPanel("sidebar");
