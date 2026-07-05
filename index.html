@@ -7,40 +7,41 @@
 <title>Ilyssian</title>
 <style>
   :root {
-    --bg0: #1e1e21; --bg1: #26262b; --bg2: #2e2e34; --bg3: #37373e;
-    --fg0: #dcddde; --fg1: #a3a6ad; --fg2: #6e7178;
-    --accent: #8b7cf6; --accent-dim: #5b4fc0;
-    --link: #8b9ff6; --tag-bg: #3a3363; --tag-fg: #b8aaff;
-    --danger: #e06c75; --ok: #7ec97e;
+    --bg0: #0d0b0e; --bg1: #171319; --bg2: #241f27; --bg3: #2e2832;
+    --fg0: #ede6e3; --fg1: #c8bec6; --fg2: #8a8090;
+    --accent: #b89a6e; --accent-dim: #8a7050;
+    --link: #c8bec6; --tag-bg: #2e2832; --tag-fg: #b89a6e;
+    --danger: #c9707a; --ok: #8fae7e;
     --mono: "Cascadia Code", Consolas, Menlo, monospace;
-    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+    --sans: "Jost", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --serif: "Cormorant Garamond", Georgia, serif;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body { font-family: var(--sans); background: var(--bg0); color: var(--fg0); display: flex; flex-direction: column; overflow: hidden; }
 
-  #topbar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: var(--bg1); border-bottom: 1px solid #000; flex: 0 0 auto; flex-wrap: nowrap; overflow-x: auto; }
-  #topbar .brand { font-weight: 700; letter-spacing: .5px; color: var(--accent); user-select: none; white-space: nowrap; }
+  #topbar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: var(--bg1); border-bottom: 1px solid #241f27; flex: 0 0 auto; flex-wrap: nowrap; overflow-x: auto; }
+  #topbar .brand { font-weight: 700; letter-spacing: .5px; color: var(--accent); font-family: var(--serif); user-select: none; white-space: nowrap; }
   #vaultName { color: var(--fg1); font-size: 12px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  button { background: var(--bg3); color: var(--fg0); border: 1px solid #45454d; border-radius: 6px; padding: 6px 11px; font-size: 13px; cursor: pointer; font-family: var(--sans); white-space: nowrap; }
-  button:hover { background: #40404a; }
+  button { background: var(--bg3); color: var(--fg0); border: 1px solid #3d3540; border-radius: 6px; padding: 6px 11px; font-size: 13px; cursor: pointer; font-family: var(--sans); white-space: nowrap; }
+  button:hover { background: #352e39; }
   button.primary { background: var(--accent-dim); border-color: var(--accent); }
   button.primary:hover { background: var(--accent); color: #fff; }
   button:disabled { opacity: .4; cursor: default; }
   #spacer { flex: 1; }
   #saveState { font-size: 12px; color: var(--fg2); white-space: nowrap; }
-  #saveState.dirty { color: #e5c07b; }
+  #saveState.dirty { color: #e0b878; }
 
   #main { flex: 1; display: flex; min-height: 0; position: relative; }
-  #sidebar { width: 270px; min-width: 200px; background: var(--bg1); border-right: 1px solid #000; display: flex; flex-direction: column; }
+  #sidebar { width: 270px; min-width: 200px; background: var(--bg1); border-right: 1px solid #241f27; display: flex; flex-direction: column; }
   #content { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
-  #rightbar { width: 250px; min-width: 180px; background: var(--bg1); border-left: 1px solid #000; overflow-y: auto; padding: 10px; }
+  #rightbar { width: 250px; min-width: 180px; background: var(--bg1); border-left: 1px solid #241f27; overflow-y: auto; padding: 10px; }
   #rightbar h4 { margin: 10px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--fg2); }
   #rightbar .rb-item { display: block; padding: 6px; border-radius: 4px; color: var(--link); text-decoration: none; font-size: 13px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #rightbar .rb-item:hover { background: var(--bg2); }
   #rightbar .rb-empty { color: var(--fg2); font-size: 12px; padding: 2px 6px; }
 
-  #tabs { display: flex; flex: 0 0 auto; border-bottom: 1px solid #000; }
+  #tabs { display: flex; flex: 0 0 auto; border-bottom: 1px solid #241f27; }
   #tabs .tab { flex: 1; text-align: center; padding: 10px 0; font-size: 12px; color: var(--fg2); cursor: pointer; user-select: none; }
   #tabs .tab.active { color: var(--fg0); background: var(--bg2); }
   #panes { flex: 1; overflow-y: auto; padding: 6px; -webkit-overflow-scrolling: touch; }
@@ -99,7 +100,7 @@
   #preview pre code { background: none; padding: 0; }
   #preview blockquote { border-left: 3px solid var(--accent-dim); margin: 8px 0; padding: 2px 14px; color: var(--fg1); }
   #preview hr { border: none; border-top: 1px solid var(--bg3); }
-  #preview mark { background: #6d5c1e; color: #ffe9a3; border-radius: 3px; padding: 0 2px; }
+  #preview mark { background: #4a3a1f; color: #f5dfa8; border-radius: 3px; padding: 0 2px; }
   #preview img { max-width: 100%; border-radius: 6px; }
   #preview table { border-collapse: collapse; max-width: 100%; overflow-x: auto; display: block; }
   #preview td, #preview th { border: 1px solid var(--bg3); padding: 4px 10px; }
@@ -113,7 +114,7 @@
 
   #newNoteRow { display: none; gap: 6px; margin-bottom: 8px; }
   #newNoteRow.show { display: flex; }
-  #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--bg3); border: 1px solid #4a4a55; padding: 8px 18px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 99; max-width: 90vw; }
+  #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--bg3); border: 1px solid #3d3540; padding: 8px 18px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 99; max-width: 90vw; }
   #toast.show { opacity: 1; }
   #busy { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), transparent); display: none; z-index: 100; animation: slide 1s linear infinite; }
   @keyframes slide { from { transform: translateX(-100%);} to { transform: translateX(100%);} }
@@ -985,7 +986,7 @@ function drawGraph() {
   for (const n of graph.nodes) {
     const r = (3 + Math.min(9, n.deg * 1.2)) * Math.min(z, 1.4);
     ctx.beginPath(); ctx.arc(sx(n), sy(n), r, 0, 7);
-    ctx.fillStyle = n === graph.hover ? cs.getPropertyValue("--accent") : (n.deg ? "#8f86d8" : "#55555f");
+    ctx.fillStyle = n === graph.hover ? cs.getPropertyValue("--accent") : (n.deg ? "#b89a6e" : "#55505a");
     ctx.fill();
   }
   ctx.fillStyle = "rgba(220,221,222,.85)"; ctx.font = "11px sans-serif"; ctx.textAlign = "center";
@@ -1135,4 +1136,3 @@ if (typeof module !== "undefined" && module.exports) {
 </script>
 </body>
 </html>
-
