@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Ilyssian</title>
+<style>
+  :root {
+    --bg0: #1e1e21; --bg1: #26262b; --bg2: #2e2e34; --bg3: #37373e;
+    --fg0: #dcddde; --fg1: #a3a6ad; --fg2: #6e7178;
+    --accent: #8b7cf6; --accent-dim: #5b4fc0;
+    --link: #8b9ff6; --tag-bg: #3a3363; --tag-fg: #b8aaff;
+    --danger: #e06c75; --ok: #7ec97e;
+    --mono: "Cascadia Code", Consolas, Menlo, monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { font-family: var(--sans); background: var(--bg0); color: var(--fg0); display: flex; flex-direction: column; overflow: hidden; }
+
+  #topbar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: var(--bg1); border-bottom: 1px solid #000; flex: 0 0 auto; flex-wrap: nowrap; overflow-x: auto; }
+  #topbar .brand { font-weight: 700; letter-spacing: .5px; color: var(--accent); user-select: none; white-space: nowrap; }
+  #vaultName { color: var(--fg1); font-size: 12px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  button { background: var(--bg3); color: var(--fg0); border: 1px solid #45454d; border-radius: 6px; padding: 6px 11px; font-size: 13px; cursor: pointer; font-family: var(--sans); white-space: nowrap; }
+  button:hover { background: #40404a; }
+  button.primary { background: var(--accent-dim); border-color: var(--accent); }
+  button.primary:hover { background: var(--accent); color: #fff; }
+  button:disabled { opacity: .4; cursor: default; }
+  #spacer { flex: 1; }
+  #saveState { font-size: 12px; color: var(--fg2); white-space: nowrap; }
+  #saveState.dirty { color: #e5c07b; }
+
+  #main { flex: 1; display: flex; min-height: 0; position: relative; }
+  #sidebar { width: 270px; min-width: 200px; background: var(--bg1); border-right: 1px solid #000; display: flex; flex-direction: column; }
+  #content { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
+  #rightbar { width: 250px; min-width: 180px; background: var(--bg1); border-left: 1px solid #000; overflow-y: auto; padding: 10px; }
+  #rightbar h4 { margin: 10px 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--fg2); }
+  #rightbar .rb-item { display: block; padding: 6px; border-radius: 4px; color: var(--link); text-decoration: none; font-size: 13px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #rightbar .rb-item:hover { background: var(--bg2); }
+  #rightbar .rb-empty { color: var(--fg2); font-size: 12px; padding: 2px 6px; }
+
+  #tabs { display: flex; flex: 0 0 auto; border-bottom: 1px solid #000; }
+  #tabs .tab { flex: 1; text-align: center; padding: 10px 0; font-size: 12px; color: var(--fg2); cursor: pointer; user-select: none; }
+  #tabs .tab.active { color: var(--fg0); background: var(--bg2); }
+  #panes { flex: 1; overflow-y: auto; padding: 6px; -webkit-overflow-scrolling: touch; }
+  .pane { display: none; }
+  .pane.active { display: block; }
+
+  .tree-folder > .tree-label { color: var(--fg1); font-weight: 600; }
+  .tree-label { display: flex; align-items: center; gap: 5px; padding: 7px 6px; border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tree-label:hover { background: var(--bg2); }
+  .tree-label.current { background: var(--accent-dim); color: #fff; }
+  .tree-children { margin-left: 14px; border-left: 1px solid var(--bg3); padding-left: 4px; }
+  .tree-folder.collapsed > .tree-children { display: none; }
+  .caret { display: inline-block; width: 10px; font-size: 9px; color: var(--fg2); transition: transform .1s; }
+  .tree-folder.collapsed .caret { transform: rotate(-90deg); }
+
+  #searchBox, #newNoteName, .cfg input { width: 100%; background: var(--bg0); border: 1px solid var(--bg3); color: var(--fg0); border-radius: 6px; padding: 9px; font-size: 14px; margin-bottom: 8px; font-family: var(--sans); }
+  #searchBox:focus, #newNoteName:focus, .cfg input:focus { outline: none; border-color: var(--accent-dim); }
+  .sr { padding: 8px 7px; border-radius: 5px; cursor: pointer; margin-bottom: 4px; }
+  .sr:hover { background: var(--bg2); }
+  .sr .sr-title { font-size: 14px; color: var(--link); }
+  .sr .sr-snip { font-size: 12px; color: var(--fg1); margin-top: 2px; line-height: 1.5; }
+  .sr .sr-snip mark { background: var(--accent-dim); color: #fff; border-radius: 2px; padding: 0 1px; }
+
+  .tagrow { display: flex; justify-content: space-between; align-items: center; padding: 8px 7px; border-radius: 5px; cursor: pointer; font-size: 14px; }
+  .tagrow:hover { background: var(--bg2); }
+  .tagrow .count { color: var(--fg2); font-size: 11px; }
+  .tag-chip { background: var(--tag-bg); color: var(--tag-fg); border-radius: 10px; padding: 1px 8px; font-size: 12px; text-decoration: none; cursor: pointer; }
+
+  #noteHeader { padding: 10px 16px 0; flex: 0 0 auto; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  #noteTitle { font-size: 19px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
+  #notePath { font-size: 11px; color: var(--fg2); }
+  #modeToggle { margin-left: auto; display: flex; gap: 0; }
+  #modeToggle button { border-radius: 0; padding: 5px 14px; font-size: 12px; }
+  #modeToggle button:first-child { border-radius: 6px 0 0 6px; }
+  #modeToggle button:last-child { border-radius: 0 6px 6px 0; }
+  #modeToggle button.on { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
+  #btnDelete { padding: 5px 10px; font-size: 13px; }
+  #btnDelete:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+  #editor { flex: 1; width: 100%; resize: none; border: none; outline: none; background: var(--bg0); color: var(--fg0); font-family: var(--mono); font-size: 15px; line-height: 1.7; padding: 12px 16px 40vh; display: none; }
+  #preview { flex: 1; overflow-y: auto; padding: 12px 16px 40vh; display: none; max-width: 100%; -webkit-overflow-scrolling: touch; }
+  #welcome { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; color: var(--fg2); padding: 20px; text-align: center; overflow-y: auto; }
+  #welcome .big { font-size: 42px; color: var(--accent); font-weight: 800; }
+  .cfg { width: 100%; max-width: 420px; text-align: left; }
+  .cfg label { font-size: 12px; color: var(--fg1); display: block; margin: 10px 0 4px; }
+  .cfg .hint { font-size: 11px; color: var(--fg2); margin-top: 10px; line-height: 1.6; }
+  #cfgError { color: var(--danger); font-size: 13px; min-height: 18px; margin-top: 8px; }
+
+  #preview { line-height: 1.7; font-size: 16px; }
+  #preview h1, #preview h2, #preview h3, #preview h4 { border-bottom: 1px solid var(--bg3); padding-bottom: 4px; margin-top: 22px; }
+  #preview a.ext { color: var(--link); }
+  #preview a.wikilink { color: var(--link); text-decoration: none; border-bottom: 1px dashed var(--accent-dim); cursor: pointer; }
+  #preview a.wikilink.broken { color: var(--danger); border-bottom-color: var(--danger); }
+  #preview code { background: var(--bg2); border-radius: 4px; padding: 1px 5px; font-family: var(--mono); font-size: 13px; }
+  #preview pre { background: var(--bg1); border: 1px solid var(--bg3); border-radius: 8px; padding: 12px 14px; overflow-x: auto; }
+  #preview pre code { background: none; padding: 0; }
+  #preview blockquote { border-left: 3px solid var(--accent-dim); margin: 8px 0; padding: 2px 14px; color: var(--fg1); }
+  #preview hr { border: none; border-top: 1px solid var(--bg3); }
+  #preview mark { background: #6d5c1e; color: #ffe9a3; border-radius: 3px; padding: 0 2px; }
+  #preview img { max-width: 100%; border-radius: 6px; }
+  #preview table { border-collapse: collapse; max-width: 100%; overflow-x: auto; display: block; }
+  #preview td, #preview th { border: 1px solid var(--bg3); padding: 4px 10px; }
+  #preview input[type=checkbox] { accent-color: var(--accent); }
+  #preview .fm { background: var(--bg1); border: 1px solid var(--bg3); border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--fg1); font-family: var(--mono); white-space: pre-wrap; margin-bottom: 14px; }
+
+  #graphWrap { position: absolute; inset: 0; background: var(--bg0); display: none; z-index: 5; }
+  #graphCanvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  #graphClose { position: absolute; top: 12px; right: 14px; }
+  #graphHint { position: absolute; bottom: 10px; left: 14px; font-size: 11px; color: var(--fg2); }
+
+  #newNoteRow { display: none; gap: 6px; margin-bottom: 8px; }
+  #newNoteRow.show { display: flex; }
+  #toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--bg3); border: 1px solid #4a4a55; padding: 8px 18px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 99; max-width: 90vw; }
+  #toast.show { opacity: 1; }
+  #busy { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), transparent); display: none; z-index: 100; animation: slide 1s linear infinite; }
+  @keyframes slide { from { transform: translateX(-100%);} to { transform: translateX(100%);} }
+  #busy.show { display: block; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* ---------- mobile ---------- */
+  #btnPanel, #btnInfo { display: none; }
+  @media (max-width: 760px) {
+    #btnPanel, #btnInfo { display: inline-block; }
+    #sidebar { position: absolute; z-index: 20; top: 0; bottom: 0; left: 0; width: 82vw; max-width: 320px; transform: translateX(-102%); transition: transform .18s; box-shadow: 4px 0 18px rgba(0,0,0,.5); }
+    #sidebar.open { transform: translateX(0); }
+    #rightbar { position: absolute; z-index: 20; top: 0; bottom: 0; right: 0; width: 78vw; max-width: 300px; transform: translateX(102%); transition: transform .18s; box-shadow: -4px 0 18px rgba(0,0,0,.5); }
+    #rightbar.open { transform: translateX(0); }
+    #scrim { position: absolute; inset: 0; background: rgba(0,0,0,.45); z-index: 15; display: none; }
+    #scrim.show { display: block; }
+    #noteTitle { max-width: 100%; font-size: 17px; }
+    #notePath { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="busy"></div>
+
+<div id="topbar">
+  <button id="btnPanel" title="Files">☰</button>
+  <span class="brand">◆ Ilyssian</span>
+  <span id="vaultName"></span>
+  <button id="btnNew" disabled>New</button>
+  <button id="btnDaily" disabled>Daily</button>
+  <button id="btnGraph" disabled>Graph</button>
+  <button id="btnSync" disabled title="Reload from GitHub">⟳</button>
+  <span id="spacer"></span>
+  <span id="saveState"></span>
+  <button id="btnSave" disabled>Save</button>
+  <button id="btnInfo" title="Links & tags">ℹ</button>
+  <button id="btnSettings" title="Settings">⚙</button>
+</div>
+
+<div id="main">
+  <div id="sidebar">
+    <div id="tabs">
+      <div class="tab active" data-pane="files">Files</div>
+      <div class="tab" data-pane="search">Search</div>
+      <div class="tab" data-pane="tags">Tags</div>
+    </div>
+    <div id="panes">
+      <div class="pane active" id="pane-files">
+        <div id="newNoteRow">
+          <input id="newNoteName" placeholder="folder/Note name" spellcheck="false">
+        </div>
+        <div id="tree"></div>
+      </div>
+      <div class="pane" id="pane-search">
+        <input id="searchBox" placeholder="Search vault…" spellcheck="false">
+        <div id="searchResults"></div>
+      </div>
+      <div class="pane" id="pane-tags">
+        <div id="tagList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="content">
+    <div id="welcome">
+      <div class="big">◆</div>
+      <div id="cfgIntro">Connect to your GitHub vault. Notes are fetched straight from your private repo — nothing passes through any other server.</div>
+      <div class="cfg">
+        <label>Repository (owner/name)</label>
+        <input id="cfgRepo" placeholder="obsidianarcana/Ilyssian" value="obsidianarcana/Ilyssian" spellcheck="false" autocapitalize="none">
+        <label>Branch</label>
+        <input id="cfgBranch" value="main" spellcheck="false" autocapitalize="none">
+        <label>Fine-grained personal access token</label>
+        <input id="cfgToken" type="password" placeholder="github_pat_…" spellcheck="false" autocapitalize="none">
+        <button id="cfgConnect" class="primary" style="width:100%;margin-top:12px;padding:10px">Connect</button>
+        <div id="cfgError"></div>
+        <div class="hint">
+          Token needs only <b>Contents: Read and write</b> permission, scoped to this one repository.
+          It is stored in this browser's localStorage only. Create one at
+          github.com → Settings → Developer settings → Fine-grained tokens.
+        </div>
+      </div>
+    </div>
+    <div id="noteHeader" style="display:none">
+      <span id="noteTitle"></span>
+      <span id="notePath"></span>
+      <div id="modeToggle">
+        <button id="btnEdit">Edit</button>
+        <button id="btnPreview" class="on">Read</button>
+      </div>
+      <button id="btnDelete" title="Delete this note">🗑</button>
+    </div>
+    <textarea id="editor" spellcheck="false"></textarea>
+    <div id="preview"></div>
+    <div id="graphWrap">
+      <canvas id="graphCanvas"></canvas>
+      <button id="graphClose">Close ✕</button>
+      <div id="graphHint">drag to pan · pinch/scroll to zoom · tap node to open</div>
+    </div>
+  </div>
+
+  <div id="rightbar">
+    <h4>Backlinks</h4><div id="backlinks"><div class="rb-empty">—</div></div>
+    <h4>Outgoing links</h4><div id="outlinks"><div class="rb-empty">—</div></div>
+    <h4>Tags in note</h4><div id="noteTags"><div class="rb-empty">—</div></div>
+  </div>
+
+  <div id="scrim"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ================= PURE LOGIC (no DOM) ================= */
+
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function baseName(path) {
+  const f = path.split("/").pop();
+  return f.replace(/\.md$/i, "");
+}
+
+function extractWikilinks(text) {
+  const out = [];
+  const re = /(?<!!)\[\[([^\[\]]+?)\]\]/g;
+  let m;
+  const noCode = stripCode(text);
+  while ((m = re.exec(noCode)) !== null) {
+    let inner = m[1];
+    let alias = null, heading = null;
+    const pipe = inner.indexOf("|");
+    if (pipe >= 0) { alias = inner.slice(pipe + 1).trim(); inner = inner.slice(0, pipe); }
+    const hash = inner.indexOf("#");
+    if (hash >= 0) { heading = inner.slice(hash + 1).trim(); inner = inner.slice(0, hash); }
+    inner = inner.trim();
+    if (inner) out.push({ target: inner, alias, heading });
+  }
+  return out;
+}
+
+function extractTags(text) {
+  const out = new Set();
+  const noCode = stripCode(text);
+  const re = /(^|[\s(])#([A-Za-z0-9_\/-]*[A-Za-z_][A-Za-z0-9_\/-]*)/g;
+  let m;
+  while ((m = re.exec(noCode)) !== null) out.add(m[2]);
+  return [...out];
+}
+
+function stripCode(text) {
+  return text.replace(/```[\s\S]*?```/g, " ").replace(/`[^`\n]*`/g, " ");
+}
+
+function splitFrontmatter(text) {
+  const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+  if (m) return { fm: m[1], body: text.slice(m[0].length) };
+  return { fm: null, body: text };
+}
+
+function resolveLink(target, nameIndex, pathSet) {
+  const t = target.replace(/\.md$/i, "");
+  const lower = t.toLowerCase();
+  if (pathSet.has(lower + ".md")) return pathSet.get(lower + ".md");
+  if (nameIndex.has(lower)) return nameIndex.get(lower);
+  for (const [p, real] of pathSet) {
+    if (p.endsWith("/" + lower + ".md")) return real;
+  }
+  return null;
+}
+
+function renderInline(s, ctx) {
+  const codes = [];
+  s = s.replace(/`([^`\n]+)`/g, (_, c) => { codes.push(c); return "\x00C" + (codes.length - 1) + "\x00"; });
+
+  s = s.replace(/!\[\[([^\[\]]+?)\]\]/g, (_, inner) => {
+    const name = inner.split("|")[0].trim();
+    return '<img class="embed" data-embed="' + name + '" alt="' + name + '">';
+  });
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_, alt, url) =>
+    /^(https?:|data:)/.test(url) ? '<img alt="' + alt + '" src="' + url + '">'
+      : '<img class="embed" data-embed="' + decodeURIComponent(url) + '" alt="' + alt + '">');
+  s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a class="ext" href="$2" target="_blank" rel="noopener">$1</a>');
+  s = s.replace(/(?<!!)\[\[([^\[\]]+?)\]\]/g, (_, inner) => {
+    let disp = inner, target = inner;
+    const pipe = inner.indexOf("|");
+    if (pipe >= 0) { disp = inner.slice(pipe + 1); target = inner.slice(0, pipe); }
+    target = target.split("#")[0].trim();
+    const resolved = ctx && ctx.resolve ? ctx.resolve(target) : null;
+    const cls = resolved ? "wikilink" : "wikilink broken";
+    return '<a class="' + cls + '" data-target="' + escapeHtml(target) + '">' + disp.trim() + "</a>";
+  });
+  s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/__([^_]+)__/g, "<strong>$1</strong>");
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
+  s = s.replace(/~~([^~]+)~~/g, "<del>$1</del>");
+  s = s.replace(/==([^=]+)==/g, "<mark>$1</mark>");
+  s = s.replace(/(^|[\s(])#([A-Za-z0-9_\/-]*[A-Za-z_][A-Za-z0-9_\/-]*)/g,
+    '$1<a class="tag-chip" data-tag="$2">#$2</a>');
+  s = s.replace(/\x00C(\d+)\x00/g, (_, i) => "<code>" + codes[+i] + "</code>");
+  return s;
+}
+
+function renderMarkdown(raw, ctx) {
+  const { fm, body } = splitFrontmatter(raw);
+  const lines = body.split(/\r?\n/);
+  const out = [];
+  if (fm) out.push('<div class="fm">' + escapeHtml(fm) + "</div>");
+
+  let i = 0;
+  let listStack = [];
+  const closeLists = (depth) => { while (listStack.length > depth) out.push("</" + listStack.pop() + ">"); };
+
+  while (i < lines.length) {
+    let line = lines[i];
+
+    const fence = line.match(/^```(\w*)/);
+    if (fence) {
+      closeLists(0);
+      const buf = [];
+      i++;
+      while (i < lines.length && !/^```/.test(lines[i])) { buf.push(lines[i]); i++; }
+      i++;
+      out.push('<pre><code class="lang-' + fence[1] + '">' + escapeHtml(buf.join("\n")) + "</code></pre>");
+      continue;
+    }
+
+    const esc = escapeHtml(line);
+
+    const h = line.match(/^(#{1,6})\s+(.*)/);
+    if (h) { closeLists(0); const n = h[1].length; out.push("<h" + n + ">" + renderInline(escapeHtml(h[2]), ctx) + "</h" + n + ">"); i++; continue; }
+    if (/^(\s*)(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) { closeLists(0); out.push("<hr>"); i++; continue; }
+    if (/^\s*>\s?/.test(line)) {
+      closeLists(0);
+      const buf = [];
+      while (i < lines.length && /^\s*>\s?/.test(lines[i])) { buf.push(lines[i].replace(/^\s*>\s?/, "")); i++; }
+      out.push("<blockquote>" + renderMarkdown(buf.join("\n"), ctx) + "</blockquote>");
+      continue;
+    }
+    const li = line.match(/^(\s*)([-*+]|\d+\.)\s+(.*)/);
+    if (li) {
+      const depth = Math.floor(li[1].replace(/\t/g, "  ").length / 2) + 1;
+      const type = /\d/.test(li[2][0]) ? "ol" : "ul";
+      while (listStack.length < depth) { out.push("<" + type + ">"); listStack.push(type); }
+      closeLists(depth);
+      let item = li[3];
+      const task = item.match(/^\[([ xX])\]\s+(.*)/);
+      if (task) {
+        const done = task[1] !== " ";
+        item = '<input type="checkbox" disabled' + (done ? " checked" : "") + "> " +
+               (done ? "<del>" + renderInline(escapeHtml(task[2]), ctx) + "</del>" : renderInline(escapeHtml(task[2]), ctx));
+      } else {
+        item = renderInline(escapeHtml(item), ctx);
+      }
+      out.push("<li>" + item + "</li>");
+      i++; continue;
+    }
+    if (/^\s*\|.*\|\s*$/.test(line) && i + 1 < lines.length && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) {
+      closeLists(0);
+      const headCells = line.trim().slice(1, -1).split("|").map(c => c.trim());
+      out.push("<table><thead><tr>" + headCells.map(c => "<th>" + renderInline(escapeHtml(c), ctx) + "</th>").join("") + "</tr></thead><tbody>");
+      i += 2;
+      while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) {
+        const cells = lines[i].trim().slice(1, -1).split("|").map(c => c.trim());
+        out.push("<tr>" + cells.map(c => "<td>" + renderInline(escapeHtml(c), ctx) + "</td>").join("") + "</tr>");
+        i++;
+      }
+      out.push("</tbody></table>");
+      continue;
+    }
+    if (/^\s*$/.test(line)) { closeLists(0); i++; continue; }
+    closeLists(0);
+    const buf = [renderInline(esc, ctx)];
+    i++;
+    while (i < lines.length && !/^\s*$/.test(lines[i]) &&
+           !/^(#{1,6})\s|^```|^\s*>|^(\s*)([-*+]|\d+\.)\s|^(\s*)(-{3,})\s*$/.test(lines[i]) &&
+           !/^\s*\|.*\|\s*$/.test(lines[i])) {
+      buf.push(renderInline(escapeHtml(lines[i]), ctx));
+      i++;
+    }
+    out.push("<p>" + buf.join("<br>") + "</p>");
+  }
+  closeLists(0);
+  return out.join("\n");
+}
+
+function buildIndex(contents) {
+  const nameIndex = new Map();
+  const pathSet = new Map();
+  for (const p of contents.keys()) {
+    pathSet.set(p.toLowerCase(), p);
+    const b = baseName(p).toLowerCase();
+    if (!nameIndex.has(b)) nameIndex.set(b, p);
+  }
+  const links = new Map(), backlinks = new Map(), tags = new Map();
+  for (const p of contents.keys()) backlinks.set(p, new Set());
+  for (const [p, text] of contents) {
+    const wl = extractWikilinks(text);
+    const resolved = [];
+    for (const l of wl) {
+      const r = resolveLink(l.target, nameIndex, pathSet);
+      resolved.push({ raw: l.target, path: r });
+      if (r && r !== p) backlinks.get(r).add(p);
+    }
+    links.set(p, resolved);
+    for (const t of extractTags(text)) {
+      if (!tags.has(t)) tags.set(t, new Set());
+      tags.get(t).add(p);
+    }
+  }
+  return { nameIndex, pathSet, links, backlinks, tags };
+}
+
+function searchVault(contents, query) {
+  const q = query.toLowerCase();
+  if (!q) return [];
+  const results = [];
+  for (const [p, text] of contents) {
+    const lower = text.toLowerCase();
+    let idx = lower.indexOf(q);
+    const nameHit = baseName(p).toLowerCase().includes(q);
+    if (idx < 0 && !nameHit) continue;
+    let snippet = "";
+    if (idx >= 0) {
+      const start = Math.max(0, idx - 40);
+      snippet = (start > 0 ? "…" : "") + text.slice(start, idx) + "\x01" + text.slice(idx, idx + q.length) + "\x02" + text.slice(idx + q.length, idx + q.length + 60).split("\n")[0];
+    }
+    results.push({ path: p, snippet, score: (nameHit ? 2 : 0) + (idx >= 0 ? 1 : 0) });
+  }
+  results.sort((a, b) => b.score - a.score || a.path.localeCompare(b.path));
+  return results.slice(0, 60);
+}
+
+function todayStr(d) {
+  d = d || new Date();
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+
+function applyTemplate(tpl, title, d) {
+  d = d || new Date();
+  return tpl.replace(/{{\s*title\s*}}/gi, title).replace(/{{\s*date\s*}}/gi, todayStr(d))
+            .replace(/{{\s*time\s*}}/gi, d.toTimeString().slice(0, 5));
+}
+
+/* base64 <-> UTF-8 (GitHub Contents API uses base64) */
+function b64ToUtf8(b64) {
+  const bin = atob(b64.replace(/\s/g, ""));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+function utf8ToB64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  return btoa(bin);
+}
+
+/* ================= APP (DOM + GitHub API) ================= */
+if (typeof window !== "undefined" && typeof document !== "undefined") (function () {
+
+const $ = id => document.getElementById(id);
+const API = "https://api.github.com";
+const state = {
+  cfg: null,            // {repo, branch, token}
+  contents: new Map(),  // path -> string
+  shas: new Map(),      // path -> blob sha (needed for update/delete)
+  imagePaths: [],       // repo paths of image files
+  imageCache: new Map(),// path -> object URL
+  index: null,
+  current: null,
+  dirty: false,
+  mode: "preview",
+};
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2600);
+}
+function busy(on) { $("busy").classList.toggle("show", !!on); }
+
+async function gh(path, opts) {
+  opts = opts || {};
+  opts.headers = Object.assign({
+    "Authorization": "Bearer " + state.cfg.token,
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  }, opts.headers || {});
+  const res = await fetch(API + path, opts);
+  if (!res.ok) {
+    let msg = res.status + " " + res.statusText;
+    try { msg += ": " + (await res.json()).message; } catch (e) {}
+    throw new Error(msg);
+  }
+  return res;
+}
+
+/* ---------- config ---------- */
+function loadCfg() {
+  try { return JSON.parse(localStorage.getItem("ilyssian-cfg")); } catch (e) { return null; }
+}
+function saveCfg(cfg) { localStorage.setItem("ilyssian-cfg", JSON.stringify(cfg)); }
+
+async function connect() {
+  const cfg = {
+    repo: $("cfgRepo").value.trim().replace(/^https:\/\/github\.com\//, "").replace(/\/$/, ""),
+    branch: $("cfgBranch").value.trim() || "main",
+    token: $("cfgToken").value.trim(),
+  };
+  if (!/^[^\/\s]+\/[^\/\s]+$/.test(cfg.repo)) { $("cfgError").textContent = "Repository must look like owner/name."; return; }
+  if (!cfg.token) { $("cfgError").textContent = "Token is required."; return; }
+  state.cfg = cfg;
+  $("cfgError").textContent = "";
+  try {
+    await loadVault();
+  } catch (e) {
+    state.cfg = null;
+    $("cfgError").textContent = "Could not connect: " + e.message;
+    return;
+  }
+  saveCfg(cfg);
+}
+
+function showSettings() {
+  if (state.dirty && !confirm("Unsaved changes will be lost. Continue?")) return;
+  state.current = null; state.dirty = false; updateSaveState();
+  $("noteHeader").style.display = "none";
+  $("editor").style.display = "none";
+  $("preview").style.display = "none";
+  closeGraph();
+  const cfg = loadCfg();
+  if (cfg) { $("cfgRepo").value = cfg.repo; $("cfgBranch").value = cfg.branch; $("cfgToken").value = cfg.token; }
+  $("welcome").style.display = "flex";
+}
+
+/* ---------- vault load ---------- */
+async function loadVault() {
+  busy(true);
+  try {
+    const treeRes = await gh("/repos/" + state.cfg.repo + "/git/trees/" + encodeURIComponent(state.cfg.branch) + "?recursive=1");
+    const tree = (await treeRes.json()).tree || [];
+    const mdFiles = [], images = [];
+    for (const item of tree) {
+      if (item.type !== "blob") continue;
+      const p = item.path;
+      if (p.split("/").some(seg => seg.startsWith("."))) continue; // skip .obsidian etc.
+      if (/\.md$/i.test(p)) mdFiles.push(item);
+      else if (/\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(p)) images.push(p);
+    }
+    state.contents.clear(); state.shas.clear();
+    state.imagePaths = images;
+
+    // fetch note contents in parallel batches of 10
+    for (let i = 0; i < mdFiles.length; i += 10) {
+      await Promise.all(mdFiles.slice(i, i + 10).map(async item => {
+        const res = await gh("/repos/" + state.cfg.repo + "/contents/" + encodePath(item.path) + "?ref=" + encodeURIComponent(state.cfg.branch));
+        const data = await res.json();
+        state.contents.set(item.path, b64ToUtf8(data.content || ""));
+        state.shas.set(item.path, data.sha);
+      }));
+    }
+
+    state.index = buildIndex(state.contents);
+    renderTree(); renderTags();
+    $("vaultName").textContent = state.cfg.repo.split("/")[1] + " · " + state.contents.size + " notes";
+    ["btnNew", "btnDaily", "btnGraph", "btnSave", "btnSync"].forEach(id => $(id).disabled = false);
+    $("welcome").style.display = "none";
+    if (state.current && state.contents.has(state.current)) {
+      const cur = state.current; state.current = null; openNote(cur);
+    }
+    toast("Vault loaded: " + state.contents.size + " notes");
+  } finally { busy(false); }
+}
+
+function encodePath(p) { return p.split("/").map(encodeURIComponent).join("/"); }
+
+/* ---------- file tree ---------- */
+function renderTree() {
+  const root = { folders: new Map(), files: [] };
+  for (const p of [...state.contents.keys()].sort((a, b) => a.localeCompare(b))) {
+    const parts = p.split("/");
+    let node = root;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!node.folders.has(parts[i])) node.folders.set(parts[i], { folders: new Map(), files: [] });
+      node = node.folders.get(parts[i]);
+    }
+    node.files.push(p);
+  }
+  const el = $("tree"); el.innerHTML = "";
+  el.appendChild(buildTreeDom(root));
+}
+
+function buildTreeDom(node) {
+  const frag = document.createDocumentFragment();
+  for (const [name, child] of [...node.folders.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    const d = document.createElement("div"); d.className = "tree-folder";
+    const label = document.createElement("div"); label.className = "tree-label";
+    label.innerHTML = '<span class="caret">▾</span>📁 ' + escapeHtml(name);
+    label.onclick = () => d.classList.toggle("collapsed");
+    const kids = document.createElement("div"); kids.className = "tree-children";
+    kids.appendChild(buildTreeDom(child));
+    d.appendChild(label); d.appendChild(kids); frag.appendChild(d);
+  }
+  for (const p of node.files) {
+    const f = document.createElement("div"); f.className = "tree-label tree-file";
+    f.dataset.path = p;
+    f.innerHTML = '<span class="caret"></span>📄 ' + escapeHtml(baseName(p));
+    if (p === state.current) f.classList.add("current");
+    f.onclick = () => { openNote(p); closePanels(); };
+    frag.appendChild(f);
+  }
+  return frag;
+}
+
+function markCurrentInTree() {
+  document.querySelectorAll(".tree-file").forEach(el =>
+    el.classList.toggle("current", el.dataset.path === state.current));
+}
+
+/* ---------- note open / render / save ---------- */
+function confirmDiscard() {
+  if (!state.dirty) return true;
+  return confirm("Unsaved changes in the current note. Discard them?");
+}
+
+function openNote(path) {
+  if (path === state.current) return;
+  if (!confirmDiscard()) return;
+  state.current = path; state.dirty = false;
+  $("welcome").style.display = "none";
+  $("noteHeader").style.display = "flex";
+  $("noteTitle").textContent = baseName(path);
+  $("notePath").textContent = path;
+  $("editor").value = state.contents.get(path) || "";
+  setMode(state.mode);
+  updateSaveState(); markCurrentInTree(); renderRightbar();
+  closeGraph();
+}
+
+function setMode(mode) {
+  state.mode = mode;
+  $("btnEdit").classList.toggle("on", mode === "edit");
+  $("btnPreview").classList.toggle("on", mode === "preview");
+  $("editor").style.display = mode === "edit" ? "block" : "none";
+  $("preview").style.display = mode === "preview" ? "block" : "none";
+  if (mode === "preview") renderPreview();
+  else $("editor").focus();
+}
+
+function linkCtx() {
+  return { resolve: t => state.index ? resolveLink(t, state.index.nameIndex, state.index.pathSet) : null };
+}
+
+function renderPreview() {
+  $("preview").innerHTML = renderMarkdown($("editor").value, linkCtx());
+  hydrateEmbeds();
+}
+
+async function hydrateEmbeds() {
+  for (const img of $("preview").querySelectorAll("img[data-embed]")) {
+    const name = img.dataset.embed.toLowerCase();
+    const repoPath = state.imagePaths.find(p => {
+      const pl = p.toLowerCase();
+      return pl === name || pl.endsWith("/" + name);
+    });
+    if (!repoPath) { img.alt = "missing image: " + img.dataset.embed; continue; }
+    if (state.imageCache.has(repoPath)) { img.src = state.imageCache.get(repoPath); continue; }
+    try {
+      const res = await gh("/repos/" + state.cfg.repo + "/contents/" + encodePath(repoPath) + "?ref=" + encodeURIComponent(state.cfg.branch),
+        { headers: { "Accept": "application/vnd.github.raw+json" } });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      state.imageCache.set(repoPath, url);
+      img.src = url;
+    } catch (e) { console.warn("embed failed", name, e); }
+  }
+}
+
+function updateSaveState() {
+  const el = $("saveState");
+  el.textContent = state.current ? (state.dirty ? "● unsaved" : "saved") : "";
+  el.classList.toggle("dirty", state.dirty);
+}
+
+async function saveCurrent() {
+  if (!state.current || !state.dirty) return;
+  const path = state.current;
+  const text = $("editor").value;
+  busy(true);
+  try {
+    const body = {
+      message: "Update " + path + " (Ilyssian)",
+      content: utf8ToB64(text),
+      branch: state.cfg.branch,
+    };
+    if (state.shas.has(path)) body.sha = state.shas.get(path);
+    const res = await gh("/repos/" + state.cfg.repo + "/contents/" + encodePath(path), {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    state.shas.set(path, data.content.sha);
+    state.contents.set(path, text);
+    state.dirty = false; updateSaveState();
+    state.index = buildIndex(state.contents);
+    renderTags(); renderRightbar();
+    toast("Saved " + baseName(path));
+  } catch (e) {
+    if (/409|does not match/.test(e.message)) {
+      toast("Conflict: this note changed on GitHub. Press ⟳ to reload, then re-apply your edit.");
+    } else { alert("Save failed: " + e.message); }
+  } finally { busy(false); }
+}
+
+/* ---------- create / delete ---------- */
+async function createNote(path, content) {
+  path = path.replace(/^\/+|\/+$/g, "");
+  if (!/\.md$/i.test(path)) path += ".md";
+  if (path.split("/").some(seg => seg.startsWith("."))) { alert("Refusing to write inside dot-folders."); return null; }
+  if (state.contents.has(path)) { openNote(path); return path; }
+  busy(true);
+  try {
+    const res = await gh("/repos/" + state.cfg.repo + "/contents/" + encodePath(path), {
+      method: "PUT",
+      body: JSON.stringify({
+        message: "Create " + path + " (Ilyssian)",
+        content: utf8ToB64(content || ""),
+        branch: state.cfg.branch,
+      }),
+    });
+    const data = await res.json();
+    state.shas.set(path, data.content.sha);
+    state.contents.set(path, content || "");
+    state.index = buildIndex(state.contents);
+    renderTree(); renderTags();
+    state.current = null;
+    openNote(path);
+    $("vaultName").textContent = state.cfg.repo.split("/")[1] + " · " + state.contents.size + " notes";
+    return path;
+  } catch (e) { alert("Create failed: " + e.message); return null; }
+  finally { busy(false); }
+}
+
+async function deleteCurrent() {
+  if (!state.current) return;
+  const path = state.current;
+  if (!confirm('Delete "' + path + '"?\n\nGit history keeps every version, so this is recoverable from GitHub — but it disappears from the vault now.')) return;
+  busy(true);
+  try {
+    await gh("/repos/" + state.cfg.repo + "/contents/" + encodePath(path), {
+      method: "DELETE",
+      body: JSON.stringify({
+        message: "Delete " + path + " (Ilyssian)",
+        sha: state.shas.get(path),
+        branch: state.cfg.branch,
+      }),
+    });
+  } catch (e) { alert("Delete failed: " + e.message); busy(false); return; }
+  state.contents.delete(path); state.shas.delete(path);
+  state.index = buildIndex(state.contents);
+  state.current = null; state.dirty = false;
+  renderTree(); renderTags(); renderRightbar(); updateSaveState();
+  $("noteHeader").style.display = "none";
+  $("editor").style.display = "none";
+  $("preview").style.display = "none";
+  $("vaultName").textContent = state.cfg.repo.split("/")[1] + " · " + state.contents.size + " notes";
+  busy(false);
+  toast("Deleted " + baseName(path));
+}
+
+function newNotePrompt() {
+  const row = $("newNoteRow"); row.classList.add("show");
+  openPanel("sidebar"); activatePane("files");
+  const inp = $("newNoteName"); inp.value = ""; inp.focus();
+}
+
+async function dailyNote() {
+  const name = todayStr();
+  const existing = [...state.contents.keys()].find(p => baseName(p) === name);
+  if (existing) { openNote(existing); return; }
+  let tpl = null;
+  for (const [p, text] of state.contents) {
+    const parts = p.toLowerCase().split("/");
+    if (parts.length > 1 && parts[parts.length - 2] === "templates" && parts[parts.length - 1].includes("daily")) { tpl = text; break; }
+  }
+  const content = tpl ? applyTemplate(tpl, name) : "# " + name + "\n\n";
+  await createNote(name + ".md", content);
+}
+
+/* ---------- rightbar ---------- */
+function renderRightbar() {
+  const p = state.current, idx = state.index;
+  const bl = $("backlinks"), ol = $("outlinks"), tg = $("noteTags");
+  if (!p || !idx) { bl.innerHTML = ol.innerHTML = tg.innerHTML = '<div class="rb-empty">—</div>'; return; }
+  const back = [...(idx.backlinks.get(p) || [])];
+  bl.innerHTML = back.length ? "" : '<div class="rb-empty">no backlinks</div>';
+  for (const b of back.sort()) {
+    const a = document.createElement("a"); a.className = "rb-item"; a.textContent = baseName(b); a.title = b;
+    a.onclick = () => { openNote(b); closePanels(); }; bl.appendChild(a);
+  }
+  const outs = (idx.links.get(p) || []);
+  ol.innerHTML = outs.length ? "" : '<div class="rb-empty">no outgoing links</div>';
+  const seen = new Set();
+  for (const o of outs) {
+    const key = o.path || o.raw;
+    if (seen.has(key)) continue; seen.add(key);
+    const a = document.createElement("a"); a.className = "rb-item";
+    a.textContent = o.path ? baseName(o.path) : o.raw + " (unresolved)";
+    if (o.path) a.onclick = () => { openNote(o.path); closePanels(); };
+    else a.style.color = "var(--danger)";
+    ol.appendChild(a);
+  }
+  const myTags = extractTags(state.contents.get(p) || "");
+  tg.innerHTML = myTags.length ? "" : '<div class="rb-empty">no tags</div>';
+  for (const t of myTags) {
+    const a = document.createElement("a"); a.className = "tag-chip"; a.style.margin = "2px";
+    a.textContent = "#" + t; a.onclick = () => { showTag(t); closePanels(); openPanel("sidebar"); }; tg.appendChild(a);
+  }
+}
+
+/* ---------- panes / search / tags ---------- */
+function activatePane(name) {
+  document.querySelectorAll("#tabs .tab").forEach(t => t.classList.toggle("active", t.dataset.pane === name));
+  document.querySelectorAll(".pane").forEach(pn => pn.classList.toggle("active", pn.id === "pane-" + name));
+  if (name === "search") $("searchBox").focus();
+}
+
+function runSearch() {
+  const q = $("searchBox").value.trim();
+  const el = $("searchResults"); el.innerHTML = "";
+  if (!q) return;
+  const res = searchVault(state.contents, q);
+  if (!res.length) { el.innerHTML = '<div class="rb-empty">no matches</div>'; return; }
+  for (const r of res) {
+    const d = document.createElement("div"); d.className = "sr";
+    const snip = escapeHtml(r.snippet).replace("\x01", "<mark>").replace("\x02", "</mark>");
+    d.innerHTML = '<div class="sr-title">' + escapeHtml(baseName(r.path)) + '</div>' +
+                  (snip ? '<div class="sr-snip">' + snip + "</div>" : "");
+    d.onclick = () => { openNote(r.path); closePanels(); };
+    el.appendChild(d);
+  }
+}
+
+function renderTags() {
+  const el = $("tagList"); el.innerHTML = "";
+  if (!state.index) return;
+  const rows = [...state.index.tags.entries()].sort((a, b) => b[1].size - a[1].size || a[0].localeCompare(b[0]));
+  if (!rows.length) { el.innerHTML = '<div class="rb-empty">no tags in vault</div>'; return; }
+  for (const [tag, set] of rows) {
+    const d = document.createElement("div"); d.className = "tagrow";
+    d.innerHTML = "<span>#" + escapeHtml(tag) + '</span><span class="count">' + set.size + "</span>";
+    d.onclick = () => showTag(tag);
+    el.appendChild(d);
+  }
+}
+
+function showTag(tag) {
+  activatePane("search");
+  $("searchBox").value = "#" + tag;
+  const el = $("searchResults"); el.innerHTML = "";
+  const set = state.index.tags.get(tag) || new Set();
+  for (const p of [...set].sort()) {
+    const d = document.createElement("div"); d.className = "sr";
+    d.innerHTML = '<div class="sr-title">' + escapeHtml(baseName(p)) + "</div>";
+    d.onclick = () => { openNote(p); closePanels(); };
+    el.appendChild(d);
+  }
+}
+
+/* ---------- mobile panels ---------- */
+function openPanel(which) {
+  $(which).classList.add("open");
+  $("scrim").classList.add("show");
+}
+function closePanels() {
+  $("sidebar").classList.remove("open");
+  $("rightbar").classList.remove("open");
+  $("scrim").classList.remove("show");
+}
+
+/* ---------- graph view (touch + mouse) ---------- */
+const graph = { open: false, nodes: [], edges: [], anim: null, cam: { x: 0, y: 0, z: 1 }, drag: null, hover: null, pinch: null };
+
+function openGraph() {
+  if (!state.index) return;
+  graph.open = true;
+  $("graphWrap").style.display = "block";
+  const paths = [...state.contents.keys()];
+  const nodeMap = new Map();
+  graph.nodes = paths.map((p, i) => {
+    const n = { path: p, label: baseName(p), deg: 0,
+      x: Math.cos(i * 2.399963) * Math.sqrt(i) * 22, y: Math.sin(i * 2.399963) * Math.sqrt(i) * 22, vx: 0, vy: 0 };
+    nodeMap.set(p, n); return n;
+  });
+  graph.edges = [];
+  const seen = new Set();
+  for (const [p, links] of state.index.links) {
+    for (const l of links) {
+      if (!l.path || l.path === p) continue;
+      const key = p < l.path ? p + "|" + l.path : l.path + "|" + p;
+      if (seen.has(key)) continue; seen.add(key);
+      graph.edges.push([nodeMap.get(p), nodeMap.get(l.path)]);
+    }
+  }
+  for (const [a, b] of graph.edges) { a.deg++; b.deg++; }
+  graph.cam = { x: 0, y: 0, z: 1 };
+  graph.cooldown = 300;
+  cancelAnimationFrame(graph.anim);
+  tickGraph();
+}
+
+function closeGraph() {
+  if (!graph.open) return;
+  graph.open = false;
+  $("graphWrap").style.display = "none";
+  cancelAnimationFrame(graph.anim);
+}
+
+function tickGraph() {
+  if (!graph.open) return;
+  const N = graph.nodes;
+  if (graph.cooldown > 0) {
+    for (let i = 0; i < N.length; i++) for (let j = i + 1; j < N.length; j++) {
+      const a = N[i], b = N[j];
+      let dx = a.x - b.x, dy = a.y - b.y;
+      let d2 = dx * dx + dy * dy; if (d2 < 1) d2 = 1;
+      const f = 900 / d2;
+      const d = Math.sqrt(d2);
+      dx /= d; dy /= d;
+      a.vx += dx * f; a.vy += dy * f; b.vx -= dx * f; b.vy -= dy * f;
+    }
+    for (const [a, b] of graph.edges) {
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const f = (d - 90) * 0.01;
+      a.vx += dx / d * f; a.vy += dy / d * f;
+      b.vx -= dx / d * f; b.vy -= dy / d * f;
+    }
+    for (const n of N) {
+      n.vx -= n.x * 0.001; n.vy -= n.y * 0.001;
+      if (graph.drag && graph.drag.node === n) { n.vx = 0; n.vy = 0; }
+      else { n.x += n.vx *= 0.85; n.y += n.vy *= 0.85; }
+    }
+    graph.cooldown--;
+  }
+  drawGraph();
+  graph.anim = requestAnimationFrame(tickGraph);
+}
+
+function drawGraph() {
+  const cv = $("graphCanvas");
+  const rect = cv.parentElement.getBoundingClientRect();
+  if (cv.width !== rect.width * devicePixelRatio) { cv.width = rect.width * devicePixelRatio; cv.height = rect.height * devicePixelRatio; }
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  ctx.clearRect(0, 0, rect.width, rect.height);
+  const cx = rect.width / 2 + graph.cam.x, cy = rect.height / 2 + graph.cam.y, z = graph.cam.z;
+  const sx = n => cx + n.x * z, sy = n => cy + n.y * z;
+  ctx.strokeStyle = "rgba(140,140,160,.25)"; ctx.lineWidth = 1;
+  for (const [a, b] of graph.edges) { ctx.beginPath(); ctx.moveTo(sx(a), sy(a)); ctx.lineTo(sx(b), sy(b)); ctx.stroke(); }
+  const cs = getComputedStyle(document.documentElement);
+  for (const n of graph.nodes) {
+    const r = (3 + Math.min(9, n.deg * 1.2)) * Math.min(z, 1.4);
+    ctx.beginPath(); ctx.arc(sx(n), sy(n), r, 0, 7);
+    ctx.fillStyle = n === graph.hover ? cs.getPropertyValue("--accent") : (n.deg ? "#8f86d8" : "#55555f");
+    ctx.fill();
+  }
+  ctx.fillStyle = "rgba(220,221,222,.85)"; ctx.font = "11px sans-serif"; ctx.textAlign = "center";
+  if (z > 0.55) for (const n of graph.nodes) {
+    if (z > 1.1 || n.deg > 1 || n === graph.hover) ctx.fillText(n.label, sx(n), sy(n) + 16);
+  }
+}
+
+function graphNodeAt(px, py) {
+  const cv = $("graphCanvas"), rect = cv.getBoundingClientRect();
+  const cx = rect.width / 2 + graph.cam.x, cy = rect.height / 2 + graph.cam.y, z = graph.cam.z;
+  for (const n of graph.nodes) {
+    const dx = px - (cx + n.x * z), dy = py - (cy + n.y * z);
+    if (dx * dx + dy * dy < 300) return n;
+  }
+  return null;
+}
+
+function wireGraphEvents() {
+  const cv = $("graphCanvas");
+  const start = (x, y) => {
+    const r = cv.getBoundingClientRect();
+    const n = graphNodeAt(x - r.left, y - r.top);
+    graph.drag = { node: n, sx: x, sy: y, moved: false, camX: graph.cam.x, camY: graph.cam.y };
+    graph.cooldown = Math.max(graph.cooldown, 60);
+  };
+  const move = (x, y) => {
+    if (!graph.drag) return;
+    const dx = x - graph.drag.sx, dy = y - graph.drag.sy;
+    if (Math.abs(dx) + Math.abs(dy) > 6) graph.drag.moved = true;
+    if (graph.drag.node) {
+      graph.drag.node.x += dx / graph.cam.z; graph.drag.node.y += dy / graph.cam.z;
+      graph.drag.sx = x; graph.drag.sy = y;
+      graph.cooldown = Math.max(graph.cooldown, 30);
+    } else {
+      graph.cam.x = graph.drag.camX + dx; graph.cam.y = graph.drag.camY + dy;
+    }
+  };
+  const end = () => {
+    if (graph.drag && graph.drag.node && !graph.drag.moved) { openNote(graph.drag.node.path); closePanels(); }
+    graph.drag = null;
+  };
+  cv.addEventListener("mousedown", e => start(e.clientX, e.clientY));
+  window.addEventListener("mousemove", e => {
+    if (graph.open && !graph.drag) {
+      const r = cv.getBoundingClientRect();
+      graph.hover = graphNodeAt(e.clientX - r.left, e.clientY - r.top);
+      cv.style.cursor = graph.hover ? "pointer" : "grab";
+    }
+    move(e.clientX, e.clientY);
+  });
+  window.addEventListener("mouseup", end);
+  cv.addEventListener("wheel", e => {
+    e.preventDefault();
+    const f = e.deltaY < 0 ? 1.12 : 0.89;
+    graph.cam.z = Math.min(4, Math.max(0.15, graph.cam.z * f));
+  }, { passive: false });
+  // touch
+  cv.addEventListener("touchstart", e => {
+    if (e.touches.length === 1) start(e.touches[0].clientX, e.touches[0].clientY);
+    else if (e.touches.length === 2) {
+      graph.drag = null;
+      graph.pinch = { d: dist2(e.touches), z: graph.cam.z };
+    }
+  }, { passive: true });
+  cv.addEventListener("touchmove", e => {
+    if (e.touches.length === 1 && graph.drag) move(e.touches[0].clientX, e.touches[0].clientY);
+    else if (e.touches.length === 2 && graph.pinch) {
+      const f = dist2(e.touches) / graph.pinch.d;
+      graph.cam.z = Math.min(4, Math.max(0.15, graph.pinch.z * f));
+    }
+  }, { passive: true });
+  cv.addEventListener("touchend", e => { if (e.touches.length === 0) { end(); graph.pinch = null; } }, { passive: true });
+  function dist2(t) { const dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY; return Math.sqrt(dx * dx + dy * dy) || 1; }
+}
+
+/* ---------- wiring ---------- */
+function wire() {
+  $("cfgConnect").onclick = connect;
+  $("btnSettings").onclick = showSettings;
+  $("btnSync").onclick = () => { if (confirmDiscard()) { state.dirty = false; loadVault().catch(e => alert("Reload failed: " + e.message)); } };
+  $("btnSave").onclick = saveCurrent;
+  $("btnNew").onclick = newNotePrompt;
+  $("btnDaily").onclick = dailyNote;
+  $("btnGraph").onclick = () => { graph.open ? closeGraph() : openGraph(); };
+  $("graphClose").onclick = closeGraph;
+  $("btnDelete").onclick = deleteCurrent;
+  $("btnEdit").onclick = () => setMode("edit");
+  $("btnPreview").onclick = () => setMode("preview");
+  $("btnPanel").onclick = () => $("sidebar").classList.contains("open") ? closePanels() : openPanel("sidebar");
+  $("btnInfo").onclick = () => $("rightbar").classList.contains("open") ? closePanels() : openPanel("rightbar");
+  $("scrim").onclick = closePanels;
+  document.querySelectorAll("#tabs .tab").forEach(t => t.onclick = () => activatePane(t.dataset.pane));
+  $("searchBox").addEventListener("input", runSearch);
+  $("newNoteName").addEventListener("keydown", async e => {
+    if (e.key === "Enter" && e.target.value.trim()) {
+      const name = e.target.value.trim();
+      $("newNoteRow").classList.remove("show");
+      closePanels();
+      await createNote(name, "# " + name.split("/").pop().replace(/\.md$/i, "") + "\n\n");
+    }
+    if (e.key === "Escape") $("newNoteRow").classList.remove("show");
+  });
+  $("editor").addEventListener("input", () => { state.dirty = true; updateSaveState(); });
+  $("preview").addEventListener("click", async e => {
+    const wl = e.target.closest("a.wikilink");
+    if (wl) {
+      const target = wl.dataset.target;
+      const resolved = resolveLink(target, state.index.nameIndex, state.index.pathSet);
+      if (resolved) openNote(resolved);
+      else if (confirm('Create note "' + target + '"?')) await createNote(target, "# " + target + "\n\n");
+      return;
+    }
+    const tag = e.target.closest("a.tag-chip");
+    if (tag) { showTag(tag.dataset.tag); openPanel("sidebar"); }
+  });
+  window.addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); saveCurrent(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === "e") { e.preventDefault(); if (state.current) setMode(state.mode === "edit" ? "preview" : "edit"); }
+    if ((e.ctrlKey || e.metaKey) && e.key === "g") { e.preventDefault(); if (state.index) (graph.open ? closeGraph() : openGraph()); }
+    if ((e.ctrlKey || e.metaKey) && e.key === "f" && !e.shiftKey) { e.preventDefault(); openPanel("sidebar"); activatePane("search"); }
+    if (e.key === "Escape") { closeGraph(); closePanels(); }
+  });
+  window.addEventListener("beforeunload", e => { if (state.dirty) { e.preventDefault(); e.returnValue = ""; } });
+  wireGraphEvents();
+
+  // auto-connect if configured
+  const cfg = loadCfg();
+  if (cfg && cfg.repo && cfg.token) {
+    $("cfgRepo").value = cfg.repo; $("cfgBranch").value = cfg.branch; $("cfgToken").value = cfg.token;
+    state.cfg = cfg;
+    loadVault().catch(e => {
+      state.cfg = null;
+      $("cfgError").textContent = "Auto-connect failed: " + e.message;
+    });
+  }
+}
+wire();
+})();
+
+/* Node.js test hook */
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { escapeHtml, baseName, extractWikilinks, extractTags, stripCode,
+    splitFrontmatter, resolveLink, renderMarkdown, buildIndex, searchVault, todayStr,
+    applyTemplate, b64ToUtf8, utf8ToB64 };
+}
+</script>
+</body>
+</html>
