@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Ilyssian v1.1.0 -->
+<!-- Ilyssian v2.0.0 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -7,11 +7,11 @@
 <title>Ilyssian</title>
 <style>
   :root {
-    --bg0: #0d0b0e; --bg1: #171319; --bg2: #241f27; --bg3: #2e2832;
-    --fg0: #ede6e3; --fg1: #c8bec6; --fg2: #8a8090;
-    --accent: #b89a6e; --accent-dim: #8a7050;
-    --link: #c8bec6; --tag-bg: #2e2832; --tag-fg: #b89a6e;
-    --danger: #c9707a; --ok: #8fae7e;
+    --bg0: #070914; --bg1: #0d1120; --bg2: #141a2d; --bg3: #202945;
+    --fg0: #f5f7ff; --fg1: #b9c1d9; --fg2: #737e9f;
+    --accent: #9b87f5; --accent-dim: #6d56d9; --accent2: #36d9eb;
+    --link: #8de8f2; --tag-bg: rgba(155,135,245,.13); --tag-fg: #c5b8ff;
+    --danger: #fb7185; --ok: #5ee6a8;
     --mono: "Cascadia Code", Consolas, Menlo, monospace;
     --sans: "Jost", "Segoe UI", system-ui, -apple-system, sans-serif;
     --serif: "Cormorant Garamond", Georgia, serif;
@@ -141,6 +141,130 @@
     #noteTitle { max-width: 100%; font-size: 17px; }
     #notePath { display: none; }
   }
+
+  /* ---------- v2 observatory theme ---------- */
+  body {
+    background:
+      radial-gradient(circle at 15% -10%, rgba(112, 80, 230, .22), transparent 34%),
+      radial-gradient(circle at 92% 8%, rgba(35, 200, 220, .12), transparent 28%),
+      var(--bg0);
+    letter-spacing: .01em;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .19;
+    background-image: radial-gradient(rgba(255,255,255,.28) .55px, transparent .55px);
+    background-size: 25px 25px; mask-image: linear-gradient(to bottom, #000, transparent 75%);
+  }
+  #topbar {
+    min-height: 62px; padding: 10px 14px; gap: 8px;
+    background: rgba(10, 13, 27, .78); border-bottom: 1px solid rgba(160,174,220,.13);
+    backdrop-filter: blur(22px); box-shadow: 0 10px 36px rgba(0,0,0,.18);
+  }
+  .brand-block { display: flex; align-items: center; gap: 10px; margin-right: 5px; }
+  .brand-mark {
+    width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px;
+    color: #fff; font-size: 20px; background: linear-gradient(145deg, #7862e8, #30c7dc);
+    box-shadow: 0 8px 28px rgba(104,84,225,.34), inset 0 1px rgba(255,255,255,.35);
+  }
+  #topbar .brand { display: block; color: var(--fg0); font-size: 17px; line-height: 1.05; letter-spacing: .04em; }
+  .brand-sub { display: block; margin-top: 4px; color: var(--fg2); font: 600 8px/1 var(--sans); letter-spacing: .18em; }
+  #vaultName {
+    max-width: 280px; padding: 6px 10px; border: 1px solid rgba(147,164,214,.14);
+    border-radius: 999px; background: rgba(255,255,255,.035); color: var(--fg1);
+  }
+  button {
+    border-color: rgba(154,170,220,.16); background: rgba(255,255,255,.055);
+    box-shadow: inset 0 1px rgba(255,255,255,.04); transition: .16s ease;
+  }
+  button:hover { background: rgba(155,135,245,.16); border-color: rgba(155,135,245,.4); transform: translateY(-1px); }
+  button.primary { background: linear-gradient(135deg, #715be0, #397dc9); border-color: rgba(187,175,255,.5); box-shadow: 0 10px 28px rgba(76,55,183,.25); }
+  button.primary:hover { background: linear-gradient(135deg, #826ef0, #3f91d5); }
+  #main { margin: 10px; border: 1px solid rgba(148,163,210,.12); border-radius: 18px; overflow: hidden; box-shadow: 0 28px 80px rgba(0,0,0,.3); }
+  #sidebar, #rightbar { background: rgba(12,16,31,.82); backdrop-filter: blur(18px); }
+  #sidebar { width: 286px; border-right-color: rgba(148,163,210,.1); }
+  #rightbar { width: 270px; border-left-color: rgba(148,163,210,.1); }
+  #content { background: rgba(7,9,20,.68); }
+  #tabs { padding: 7px; gap: 4px; border-bottom-color: rgba(148,163,210,.1); }
+  #tabs .tab { border-radius: 8px; padding: 9px 0; font-weight: 650; letter-spacing: .04em; }
+  #tabs .tab.active { color: #fff; background: linear-gradient(135deg, rgba(119,91,224,.3), rgba(48,199,220,.12)); box-shadow: inset 0 0 0 1px rgba(155,135,245,.2); }
+  .tree-label { margin: 1px 0; padding: 7px 8px; border-radius: 8px; }
+  .tree-label:hover { background: rgba(255,255,255,.05); }
+  .tree-label.current { background: linear-gradient(90deg, rgba(122,95,224,.36), rgba(54,217,235,.08)); box-shadow: inset 3px 0 var(--accent2); }
+  #searchBox, #newNoteName, .cfg input {
+    background: rgba(2,5,15,.72); border-color: rgba(148,163,210,.18); border-radius: 10px;
+  }
+  #searchBox:focus, #newNoteName:focus, .cfg input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(155,135,245,.12); }
+  #welcome { position: relative; overflow: hidden; }
+  #welcome::before {
+    content: ""; position: absolute; width: 520px; height: 520px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(121,93,226,.18), transparent 66%); filter: blur(8px);
+  }
+  .welcome-card {
+    position: relative; width: min(94%, 580px); padding: 38px; border-radius: 24px;
+    background: linear-gradient(145deg, rgba(22,28,51,.86), rgba(11,15,30,.9));
+    border: 1px solid rgba(165,178,225,.16); box-shadow: 0 35px 90px rgba(0,0,0,.38), inset 0 1px rgba(255,255,255,.05);
+  }
+  .welcome-orb {
+    width: 72px; height: 72px; margin: 0 auto 18px; display: grid; place-items: center; border-radius: 50%;
+    color: #fff; font-size: 32px; background: radial-gradient(circle at 32% 28%, #c3b8ff, #735ce1 38%, #17385c 72%);
+    box-shadow: 0 0 0 10px rgba(142,119,241,.06), 0 0 60px rgba(91,74,203,.45);
+  }
+  .welcome-eyebrow { color: var(--accent2); font-size: 10px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; }
+  .welcome-title { margin: 8px 0 10px; font: 700 34px/1.05 var(--serif); color: var(--fg0); }
+  #cfgIntro { max-width: 470px; margin: 0 auto 22px; color: var(--fg1); line-height: 1.6; }
+  .cfg { margin: auto; padding-top: 12px; border-top: 1px solid rgba(148,163,210,.11); }
+  .cfg label { text-transform: uppercase; letter-spacing: .1em; font-size: 9px; font-weight: 800; }
+  #noteHeader { padding: 14px 18px 8px; }
+  #noteTitle { font: 700 23px/1.2 var(--serif); }
+  #notePath { padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,.04); }
+  #preview { max-width: 920px; width: 100%; margin: 0 auto; padding: 18px 34px 40vh; }
+  #editor { max-width: 980px; margin: 0 auto; background: transparent; padding: 22px 34px 40vh; }
+  #preview h1, #preview h2, #preview h3, #preview h4 { border-bottom-color: rgba(148,163,210,.12); font-family: var(--serif); }
+  #preview a.ext, #preview a.wikilink { color: var(--link); }
+  #preview pre, #preview .fm { background: rgba(4,7,17,.72); border-color: rgba(148,163,210,.14); border-radius: 12px; }
+  .code-preview-label { color: var(--accent2); font-size: 10px; font-weight: 800; letter-spacing: .15em; margin-bottom: 10px; }
+  .code-preview pre { margin: 0; white-space: pre-wrap; line-height: 1.6; }
+  #rightbar h4 { color: #8390b5; font-size: 9px; font-weight: 800; letter-spacing: .16em; }
+  #graphWrap {
+    background:
+      radial-gradient(circle at 50% 48%, rgba(85,69,183,.21), transparent 33%),
+      radial-gradient(circle at 60% 20%, rgba(38,179,205,.1), transparent 30%), #050710;
+  }
+  #graphWrap::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .28;
+    background-image: radial-gradient(rgba(214,224,255,.65) .55px, transparent .7px);
+    background-size: 31px 31px;
+  }
+  .graph-head { position: absolute; z-index: 2; top: 18px; left: 20px; right: 20px; display: flex; align-items: center; gap: 10px; pointer-events: none; }
+  .graph-title { font: 700 22px/1 var(--serif); letter-spacing: .03em; }
+  #graphStats { color: var(--fg2); font-size: 11px; }
+  .graph-actions { margin-left: auto; display: flex; gap: 7px; pointer-events: auto; }
+  #graphClose { position: static; top: auto; right: auto; }
+  #graphSpin.on { color: #fff; border-color: rgba(54,217,235,.5); background: rgba(54,217,235,.12); }
+  #graphDetail {
+    position: absolute; z-index: 2; left: 20px; bottom: 48px; max-width: min(520px, calc(100% - 40px));
+    padding: 10px 13px; border: 1px solid rgba(148,163,210,.14); border-radius: 10px;
+    background: rgba(7,10,22,.72); backdrop-filter: blur(12px); color: var(--fg1); font-size: 12px;
+    opacity: 0; transform: translateY(6px); transition: .16s ease; pointer-events: none;
+  }
+  #graphDetail.show { opacity: 1; transform: translateY(0); }
+  #graphLegend { position: absolute; z-index: 2; right: 20px; bottom: 18px; display: flex; gap: 13px; color: var(--fg2); font-size: 10px; }
+  .legend-dot { width: 7px; height: 7px; display: inline-block; margin-right: 4px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+  #graphHint { bottom: 18px; left: 20px; z-index: 2; }
+  #toast { background: rgba(19,25,45,.92); border-color: rgba(155,135,245,.3); backdrop-filter: blur(15px); box-shadow: 0 12px 45px rgba(0,0,0,.35); }
+  #busy { background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent); }
+  @media (max-width: 760px) {
+    #main { margin: 0; border: 0; border-radius: 0; }
+    #topbar { min-height: 54px; padding: 8px; }
+    .brand-sub, #vaultName { display: none; }
+    .brand-mark { width: 32px; height: 32px; }
+    .welcome-card { padding: 26px 20px; border-radius: 18px; }
+    .welcome-title { font-size: 28px; }
+    #preview, #editor { padding-left: 18px; padding-right: 18px; }
+    #graphLegend { display: none; }
+    .graph-title { font-size: 18px; }
+    #graphStats { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -149,12 +273,12 @@
 
 <div id="topbar">
   <button id="btnPanel" title="Files">☰</button>
-  <span class="brand">◆ Ilyssian</span>
+  <div class="brand-block"><span class="brand-mark">✦</span><span><span class="brand">Ilyssian</span><span class="brand-sub">KNOWLEDGE OBSERVATORY</span></span></div>
   <span id="vaultName"></span>
-  <button id="btnNew" disabled>New</button>
-  <button id="btnDaily" disabled>Daily</button>
-  <button id="btnGraph" disabled>Graph</button>
-  <button id="btnSync" disabled title="Reload from GitHub">⟳</button>
+  <button id="btnNew" disabled>＋ New</button>
+  <button id="btnDaily" disabled>◫ Daily</button>
+  <button id="btnGraph" disabled>◎ Orbit</button>
+  <button id="btnSync" disabled title="Reload from GitHub">↻ Sync</button>
   <span id="spacer"></span>
   <span id="saveState"></span>
   <button id="btnSave" disabled>Save</button>
@@ -188,8 +312,11 @@
 
   <div id="content">
     <div id="welcome">
-      <div class="big">◆</div>
-      <div id="cfgIntro">Connect to your GitHub vault. Notes are fetched straight from your private repo — nothing passes through any other server.</div>
+      <div class="welcome-card">
+      <div class="welcome-orb">✦</div>
+      <div class="welcome-eyebrow">Your portable intelligence layer</div>
+      <div class="welcome-title">Enter Ilyssian</div>
+      <div id="cfgIntro">Connect directly to your private GitHub knowledge vault. Your token stays in this browser and your records never pass through another server.</div>
       <div class="cfg">
         <label>Repository (owner/name)</label>
         <input id="cfgRepo" placeholder="obsidianarcana/Ilyssian" value="obsidianarcana/Ilyssian" spellcheck="false" autocapitalize="none">
@@ -204,6 +331,7 @@
           It is stored in this browser's localStorage only. Create one at
           github.com → Settings → Developer settings → Fine-grained tokens.
         </div>
+      </div>
       </div>
     </div>
     <div id="noteHeader" style="display:none">
@@ -220,8 +348,13 @@
     <div id="preview"></div>
     <div id="graphWrap">
       <canvas id="graphCanvas"></canvas>
-      <button id="graphClose">Close ✕</button>
-      <div id="graphHint">drag to pan · pinch/scroll to zoom · tap node to open</div>
+      <div class="graph-head">
+        <div><div class="graph-title">Knowledge Orbit</div><div id="graphStats"></div></div>
+        <div class="graph-actions"><button id="graphSpin" class="on">Auto-orbit</button><button id="graphClose">Close ✕</button></div>
+      </div>
+      <div id="graphDetail"></div>
+      <div id="graphLegend"><span><i class="legend-dot" style="color:#a78bfa;background:#a78bfa"></i>Knowledge</span><span><i class="legend-dot" style="color:#34d8eb;background:#34d8eb"></i>AI</span><span><i class="legend-dot" style="color:#f5c56b;background:#f5c56b"></i>Echo</span><span><i class="legend-dot" style="color:#62e6a9;background:#62e6a9"></i>SERA</span></div>
+      <div id="graphHint">drag to orbit · scroll or pinch to zoom · select a star to open</div>
     </div>
   </div>
 
@@ -246,7 +379,16 @@ function escapeHtml(s) {
 
 function baseName(path) {
   const f = path.split("/").pop();
-  return f.replace(/\.md$/i, "");
+  return f.replace(/\.(md|markdown|ya?ml|json)$/i, "");
+}
+
+function fileKind(path) {
+  const ext = (path.match(/\.([^.]+)$/) || [])[1];
+  return ext ? ext.toLowerCase() : "text";
+}
+
+function isKnowledgeText(path) {
+  return /\.(md|markdown|ya?ml|json)$/i.test(path);
 }
 
 function extractWikilinks(text) {
@@ -287,12 +429,14 @@ function splitFrontmatter(text) {
 }
 
 function resolveLink(target, nameIndex, pathSet) {
-  const t = target.replace(/\.md$/i, "");
+  const t = target.replace(/\.(md|markdown|ya?ml|json)$/i, "");
   const lower = t.toLowerCase();
-  if (pathSet.has(lower + ".md")) return pathSet.get(lower + ".md");
+  for (const ext of [".md", ".markdown", ".yaml", ".yml", ".json"]) {
+    if (pathSet.has(lower + ext)) return pathSet.get(lower + ext);
+  }
   if (nameIndex.has(lower)) return nameIndex.get(lower);
   for (const [p, real] of pathSet) {
-    if (p.endsWith("/" + lower + ".md")) return real;
+    if ([".md", ".markdown", ".yaml", ".yml", ".json"].some(ext => p.endsWith("/" + lower + ext))) return real;
   }
   return null;
 }
@@ -569,20 +713,20 @@ async function loadVault() {
   try {
     const treeRes = await gh("/repos/" + state.cfg.repo + "/git/trees/" + encodeURIComponent(state.cfg.branch) + "?recursive=1");
     const tree = (await treeRes.json()).tree || [];
-    const mdFiles = [], images = [];
+    const textFiles = [], images = [];
     for (const item of tree) {
       if (item.type !== "blob") continue;
       const p = item.path;
       if (p.split("/").some(seg => seg.startsWith("."))) continue; // skip .obsidian etc.
-      if (/\.md$/i.test(p)) mdFiles.push(item);
+      if (isKnowledgeText(p)) textFiles.push(item);
       else if (/\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(p)) images.push(p);
     }
     state.contents.clear(); state.shas.clear();
     state.imagePaths = images;
 
     // fetch note contents in parallel batches of 10
-    for (let i = 0; i < mdFiles.length; i += 10) {
-      await Promise.all(mdFiles.slice(i, i + 10).map(async item => {
+    for (let i = 0; i < textFiles.length; i += 10) {
+      await Promise.all(textFiles.slice(i, i + 10).map(async item => {
         const res = await gh("/repos/" + state.cfg.repo + "/contents/" + encodePath(item.path) + "?ref=" + encodeURIComponent(state.cfg.branch));
         const data = await res.json();
         state.contents.set(item.path, b64ToUtf8(data.content || ""));
@@ -592,14 +736,20 @@ async function loadVault() {
 
     state.index = buildIndex(state.contents);
     renderTree(); renderTags();
-    $("vaultName").textContent = state.cfg.repo.split("/")[1] + " · " + state.contents.size + " notes";
+    updateVaultBadge();
     ["btnNew", "btnDaily", "btnGraph", "btnSave", "btnSync"].forEach(id => $(id).disabled = false);
     $("welcome").style.display = "none";
-    if (state.current && state.contents.has(state.current)) {
-      const cur = state.current; state.current = null; openNote(cur);
-    }
-    toast("Vault loaded: " + state.contents.size + " notes");
+    const startPath = state.current && state.contents.has(state.current)
+      ? state.current
+      : (state.contents.has("README.md") ? "README.md" : [...state.contents.keys()][0]);
+    if (startPath) { state.current = null; openNote(startPath); }
+    toast("Vault loaded: " + state.contents.size + " records");
   } finally { busy(false); }
+}
+
+function updateVaultBadge() {
+  if (!state.cfg) return;
+  $("vaultName").textContent = state.cfg.repo.split("/")[1] + " · " + state.cfg.branch + " · " + state.contents.size + " records";
 }
 
 function encodePath(p) { return p.split("/").map(encodeURIComponent).join("/"); }
@@ -641,7 +791,9 @@ function buildTreeDom(node, prefix) {
   for (const p of node.files) {
     const f = document.createElement("div"); f.className = "tree-label tree-file";
     f.dataset.path = p;
-    f.innerHTML = '<span class="caret"></span>📄 ' + escapeHtml(baseName(p));
+    const kind = fileKind(p);
+    const icon = kind === "json" ? "◇" : (kind === "yaml" || kind === "yml" ? "◆" : "◈");
+    f.innerHTML = '<span class="caret"></span><span style="color:var(--accent2)">' + icon + '</span> ' + escapeHtml(baseName(p));
     if (p === state.current) f.classList.add("current");
     f.onclick = () => { openNote(p); closePanels(); };
     frag.appendChild(f);
@@ -689,8 +841,13 @@ function linkCtx() {
 }
 
 function renderPreview() {
-  $("preview").innerHTML = renderMarkdown($("editor").value, linkCtx());
-  hydrateEmbeds();
+  const kind = fileKind(state.current || "");
+  if (kind === "yaml" || kind === "yml" || kind === "json") {
+    $("preview").innerHTML = '<div class="code-preview"><div class="code-preview-label">' + kind.toUpperCase() + ' · MACHINE-READABLE KNOWLEDGE</div><pre><code>' + escapeHtml($("editor").value) + '</code></pre></div>';
+  } else {
+    $("preview").innerHTML = renderMarkdown($("editor").value, linkCtx());
+    hydrateEmbeds();
+  }
 }
 
 async function hydrateEmbeds() {
@@ -752,7 +909,7 @@ async function saveCurrent() {
 /* ---------- create / delete ---------- */
 async function createNote(path, content) {
   path = path.replace(/^\/+|\/+$/g, "");
-  if (!/\.md$/i.test(path)) path += ".md";
+  if (!isKnowledgeText(path)) path += ".md";
   if (path.split("/").some(seg => seg.startsWith("."))) { alert("Refusing to write inside dot-folders."); return null; }
   if (state.contents.has(path)) { openNote(path); return path; }
   busy(true);
@@ -772,7 +929,7 @@ async function createNote(path, content) {
     renderTree(); renderTags();
     state.current = null;
     openNote(path);
-    $("vaultName").textContent = state.cfg.repo.split("/")[1] + " · " + state.contents.size + " notes";
+    updateVaultBadge();
     return path;
   } catch (e) { alert("Create failed: " + e.message); return null; }
   finally { busy(false); }
@@ -787,7 +944,7 @@ function validPath(p) {
 async function moveNote(oldPath, newPathRaw) {
   let newPath = validPath(newPathRaw);
   if (!newPath) { alert("Invalid path."); return false; }
-  if (!/\.md$/i.test(newPath)) newPath += ".md";
+  if (!isKnowledgeText(newPath)) newPath += ".md";
   if (newPath === oldPath) return true;
   if (state.contents.has(newPath)) { alert("A note already exists at " + newPath); return false; }
   const text = state.contents.get(oldPath);
@@ -865,7 +1022,7 @@ async function deleteFolderPrompt(prefix) {
     }
     state.index = buildIndex(state.contents);
     renderTree(); renderTags(); renderRightbar(); updateSaveState();
-    $("vaultName").textContent = state.cfg.repo.split("/")[1] + " · " + state.contents.size + " notes";
+    updateVaultBadge();
     busy(false);
     toast("Folder deleted");
   }
@@ -893,7 +1050,7 @@ async function deleteCurrent() {
   $("noteHeader").style.display = "none";
   $("editor").style.display = "none";
   $("preview").style.display = "none";
-  $("vaultName").textContent = state.cfg.repo.split("/")[1] + " · " + state.contents.size + " notes";
+  updateVaultBadge();
   busy(false);
   toast("Deleted " + baseName(path));
 }
@@ -1008,71 +1165,94 @@ function closePanels() {
   $("scrim").classList.remove("show");
 }
 
-/* ---------- graph view (touch + mouse) ---------- */
-const graph = { open: false, nodes: [], edges: [], anim: null, cam: { x: 0, y: 0, z: 1 }, drag: null, hover: null, pinch: null };
+/* ---------- 3D knowledge orbit (touch + mouse) ---------- */
+const graph = {
+  open: false, nodes: [], edges: [], anim: null,
+  rotX: -0.16, rotY: 0, zoom: 1, drag: null, hover: null, pinch: null,
+  auto: true, lastFrame: 0,
+};
+
+function graphColor(path) {
+  const root = path.split("/")[0].toLowerCase();
+  if (root === "knowledge") return "#a78bfa";
+  if (root === "ai") return "#34d8eb";
+  if (root === "echostudios") return "#f5c56b";
+  if (root === "sera") return "#62e6a9";
+  if (root === "household") return "#fb8ab1";
+  return "#91a0c6";
+}
+
+function spherePoint(i, count) {
+  const y = 1 - 2 * ((i + .5) / Math.max(1, count));
+  const radius = Math.sqrt(Math.max(0, 1 - y * y));
+  const theta = Math.PI * (3 - Math.sqrt(5)) * i;
+  return { x: Math.cos(theta) * radius, y, z: Math.sin(theta) * radius };
+}
 
 function openGraph() {
   if (!state.index) return;
   graph.open = true;
   $("graphWrap").style.display = "block";
-  const paths = [...state.contents.keys()];
+  const paths = [...state.contents.keys()].sort();
   const nodeMap = new Map();
-  graph.nodes = paths.map((p, i) => {
-    const n = { path: p, label: baseName(p), deg: 0,
-      x: Math.cos(i * 2.399963) * Math.sqrt(i) * 22, y: Math.sin(i * 2.399963) * Math.sqrt(i) * 22, vx: 0, vy: 0 };
-    nodeMap.set(p, n); return n;
+  graph.nodes = paths.map((path, i) => {
+    const point = spherePoint(i, paths.length);
+    const node = { path, label: baseName(path), deg: 0, color: graphColor(path), ...point, projected: null };
+    nodeMap.set(path, node);
+    return node;
   });
   graph.edges = [];
   const seen = new Set();
-  for (const [p, links] of state.index.links) {
-    for (const l of links) {
-      if (!l.path || l.path === p) continue;
-      const key = p < l.path ? p + "|" + l.path : l.path + "|" + p;
-      if (seen.has(key)) continue; seen.add(key);
-      graph.edges.push([nodeMap.get(p), nodeMap.get(l.path)]);
-    }
+  let semanticLinks = 0;
+  const addEdge = (a, b, kind) => {
+    if (!a || !b || a === b) return;
+    const key = a.path < b.path ? a.path + "|" + b.path : b.path + "|" + a.path;
+    if (seen.has(key)) return;
+    seen.add(key); graph.edges.push({ a, b, kind }); a.deg++; b.deg++;
+    if (kind === "link") semanticLinks++;
+  };
+  for (const [path, links] of state.index.links) {
+    for (const link of links) if (link.path) addEdge(nodeMap.get(path), nodeMap.get(link.path), "link");
   }
-  for (const [a, b] of graph.edges) { a.deg++; b.deg++; }
-  graph.cam = { x: 0, y: 0, z: 1 };
-  graph.cooldown = 300;
+  const folders = new Map();
+  for (const node of graph.nodes) {
+    const folder = node.path.includes("/") ? node.path.slice(0, node.path.lastIndexOf("/")) : "/";
+    if (!folders.has(folder)) folders.set(folder, []);
+    folders.get(folder).push(node);
+  }
+  for (const nodes of folders.values()) for (let i = 1; i < nodes.length; i++) addEdge(nodes[i - 1], nodes[i], "folder");
+  graph.rotX = -0.16; graph.rotY = 0; graph.zoom = 1; graph.hover = null; graph.lastFrame = 0;
+  $("graphStats").textContent = graph.nodes.length + " records · " + semanticLinks + " links · " + state.cfg.branch;
+  $("graphSpin").classList.toggle("on", graph.auto);
   cancelAnimationFrame(graph.anim);
-  tickGraph();
+  graph.anim = requestAnimationFrame(tickGraph);
 }
 
 function closeGraph() {
   if (!graph.open) return;
-  graph.open = false;
+  graph.open = false; graph.hover = null; graph.drag = null;
   $("graphWrap").style.display = "none";
+  $("graphDetail").classList.remove("show");
   cancelAnimationFrame(graph.anim);
 }
 
-function tickGraph() {
+function projectGraphNode(node, width, height) {
+  const cy = Math.cos(graph.rotY), sy = Math.sin(graph.rotY);
+  const cx = Math.cos(graph.rotX), sx = Math.sin(graph.rotX);
+  const x1 = node.x * cy + node.z * sy;
+  const z1 = -node.x * sy + node.z * cy;
+  const y2 = node.y * cx - z1 * sx;
+  const z2 = node.y * sx + z1 * cx;
+  const perspective = 3.2 / (3.2 - z2);
+  const radius = Math.min(width, height) * .36 * graph.zoom;
+  return { x: width / 2 + x1 * radius * perspective, y: height / 2 + y2 * radius * perspective, z: z2, scale: perspective };
+}
+
+function tickGraph(now) {
   if (!graph.open) return;
-  const N = graph.nodes;
-  if (graph.cooldown > 0) {
-    for (let i = 0; i < N.length; i++) for (let j = i + 1; j < N.length; j++) {
-      const a = N[i], b = N[j];
-      let dx = a.x - b.x, dy = a.y - b.y;
-      let d2 = dx * dx + dy * dy; if (d2 < 1) d2 = 1;
-      const f = 900 / d2;
-      const d = Math.sqrt(d2);
-      dx /= d; dy /= d;
-      a.vx += dx * f; a.vy += dy * f; b.vx -= dx * f; b.vy -= dy * f;
-    }
-    for (const [a, b] of graph.edges) {
-      const dx = b.x - a.x, dy = b.y - a.y;
-      const d = Math.sqrt(dx * dx + dy * dy) || 1;
-      const f = (d - 90) * 0.01;
-      a.vx += dx / d * f; a.vy += dy / d * f;
-      b.vx -= dx / d * f; b.vy -= dy / d * f;
-    }
-    for (const n of N) {
-      n.vx -= n.x * 0.001; n.vy -= n.y * 0.001;
-      if (graph.drag && graph.drag.node === n) { n.vx = 0; n.vy = 0; }
-      else { n.x += n.vx *= 0.85; n.y += n.vy *= 0.85; }
-    }
-    graph.cooldown--;
-  }
+  const elapsed = graph.lastFrame ? Math.min(34, now - graph.lastFrame) : 16;
+  graph.lastFrame = now;
+  if (graph.auto && !graph.drag && !graph.hover) graph.rotY += elapsed * .000075;
   drawGraph();
   graph.anim = requestAnimationFrame(tickGraph);
 }
@@ -1080,93 +1260,120 @@ function tickGraph() {
 function drawGraph() {
   const cv = $("graphCanvas");
   const rect = cv.parentElement.getBoundingClientRect();
-  if (cv.width !== rect.width * devicePixelRatio) { cv.width = rect.width * devicePixelRatio; cv.height = rect.height * devicePixelRatio; }
-  const ctx = cv.getContext("2d");
-  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-  ctx.clearRect(0, 0, rect.width, rect.height);
-  const cx = rect.width / 2 + graph.cam.x, cy = rect.height / 2 + graph.cam.y, z = graph.cam.z;
-  const sx = n => cx + n.x * z, sy = n => cy + n.y * z;
-  ctx.strokeStyle = "rgba(140,140,160,.25)"; ctx.lineWidth = 1;
-  for (const [a, b] of graph.edges) { ctx.beginPath(); ctx.moveTo(sx(a), sy(a)); ctx.lineTo(sx(b), sy(b)); ctx.stroke(); }
-  const cs = getComputedStyle(document.documentElement);
-  for (const n of graph.nodes) {
-    const r = (3 + Math.min(9, n.deg * 1.2)) * Math.min(z, 1.4);
-    ctx.beginPath(); ctx.arc(sx(n), sy(n), r, 0, 7);
-    ctx.fillStyle = n === graph.hover ? cs.getPropertyValue("--accent") : (n.deg ? "#b89a6e" : "#55505a");
-    ctx.fill();
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  if (cv.width !== Math.round(rect.width * dpr) || cv.height !== Math.round(rect.height * dpr)) {
+    cv.width = Math.round(rect.width * dpr); cv.height = Math.round(rect.height * dpr);
   }
-  ctx.fillStyle = "rgba(220,221,222,.85)"; ctx.font = "11px sans-serif"; ctx.textAlign = "center";
-  if (z > 0.55) for (const n of graph.nodes) {
-    if (z > 1.1 || n.deg > 1 || n === graph.hover) ctx.fillText(n.label, sx(n), sy(n) + 16);
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, rect.width, rect.height);
+  const centerX = rect.width / 2, centerY = rect.height / 2;
+  const shell = Math.min(rect.width, rect.height) * .365 * graph.zoom;
+  const aura = ctx.createRadialGradient(centerX, centerY, shell * .12, centerX, centerY, shell * 1.13);
+  aura.addColorStop(0, "rgba(119,91,224,.075)"); aura.addColorStop(.72, "rgba(44,174,205,.025)"); aura.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(centerX, centerY, shell * 1.14, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "rgba(150,170,230,.065)"; ctx.lineWidth = 1;
+  for (const squash of [.28, .58, .88]) { ctx.beginPath(); ctx.ellipse(centerX, centerY, shell, shell * squash, 0, 0, Math.PI * 2); ctx.stroke(); }
+
+  for (const node of graph.nodes) node.projected = projectGraphNode(node, rect.width, rect.height);
+  for (const edge of graph.edges) {
+    const a = edge.a.projected, b = edge.b.projected;
+    const depth = Math.max(0, Math.min(1, ((a.z + b.z) * .25) + .5));
+    ctx.strokeStyle = edge.kind === "link" ? "rgba(126,211,229," + (.10 + depth * .25) + ")" : "rgba(145,156,190," + (.025 + depth * .07) + ")";
+    ctx.lineWidth = edge.kind === "link" ? .7 + depth * .8 : .55;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+
+  const ordered = [...graph.nodes].sort((a, b) => a.projected.z - b.projected.z);
+  for (const node of ordered) {
+    const p = node.projected;
+    const depth = Math.max(0, Math.min(1, (p.z + 1) / 2));
+    const hovered = node === graph.hover;
+    const radius = (2.4 + Math.min(5.8, node.deg * .48)) * (.68 + depth * .55) * Math.min(1.45, graph.zoom);
+    node.hitRadius = Math.max(9, radius + 5);
+    ctx.save();
+    ctx.globalAlpha = .35 + depth * .65;
+    ctx.shadowBlur = hovered ? 28 : 9 + depth * 7;
+    ctx.shadowColor = node.color;
+    ctx.fillStyle = hovered ? "#ffffff" : node.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, hovered ? radius * 1.55 : radius, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  ctx.font = "600 11px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  for (const node of ordered) {
+    const p = node.projected;
+    if (node !== graph.hover && !(p.z > .46 && node.deg >= 3 && graph.zoom > .72)) continue;
+    ctx.fillStyle = node === graph.hover ? "#ffffff" : "rgba(220,227,248,.72)";
+    ctx.shadowBlur = 10; ctx.shadowColor = "#050710";
+    ctx.fillText(node.label, p.x, p.y + node.hitRadius + 2);
+    ctx.shadowBlur = 0;
   }
 }
 
 function graphNodeAt(px, py) {
-  const cv = $("graphCanvas"), rect = cv.getBoundingClientRect();
-  const cx = rect.width / 2 + graph.cam.x, cy = rect.height / 2 + graph.cam.y, z = graph.cam.z;
-  for (const n of graph.nodes) {
-    const dx = px - (cx + n.x * z), dy = py - (cy + n.y * z);
-    if (dx * dx + dy * dy < 300) return n;
+  const ordered = [...graph.nodes].sort((a, b) => b.projected.z - a.projected.z);
+  for (const node of ordered) {
+    const p = node.projected;
+    if (!p) continue;
+    const dx = px - p.x, dy = py - p.y;
+    if (dx * dx + dy * dy <= node.hitRadius * node.hitRadius) return node;
   }
   return null;
+}
+
+function setGraphHover(node) {
+  if (graph.hover === node) return;
+  graph.hover = node;
+  const detail = $("graphDetail");
+  if (node) { detail.textContent = node.path; detail.classList.add("show"); }
+  else detail.classList.remove("show");
 }
 
 function wireGraphEvents() {
   const cv = $("graphCanvas");
   const start = (x, y) => {
-    const r = cv.getBoundingClientRect();
-    const n = graphNodeAt(x - r.left, y - r.top);
-    graph.drag = { node: n, sx: x, sy: y, moved: false, camX: graph.cam.x, camY: graph.cam.y };
-    graph.cooldown = Math.max(graph.cooldown, 60);
+    const rect = cv.getBoundingClientRect();
+    graph.drag = { node: graphNodeAt(x - rect.left, y - rect.top), sx: x, sy: y, rx: graph.rotX, ry: graph.rotY, moved: false };
+    cv.style.cursor = "grabbing";
   };
   const move = (x, y) => {
     if (!graph.drag) return;
     const dx = x - graph.drag.sx, dy = y - graph.drag.sy;
     if (Math.abs(dx) + Math.abs(dy) > 6) graph.drag.moved = true;
-    if (graph.drag.node) {
-      graph.drag.node.x += dx / graph.cam.z; graph.drag.node.y += dy / graph.cam.z;
-      graph.drag.sx = x; graph.drag.sy = y;
-      graph.cooldown = Math.max(graph.cooldown, 30);
-    } else {
-      graph.cam.x = graph.drag.camX + dx; graph.cam.y = graph.drag.camY + dy;
-    }
+    graph.rotY = graph.drag.ry + dx * .006;
+    graph.rotX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, graph.drag.rx + dy * .006));
   };
   const end = () => {
     if (graph.drag && graph.drag.node && !graph.drag.moved) { openNote(graph.drag.node.path); closePanels(); }
-    graph.drag = null;
+    graph.drag = null; cv.style.cursor = graph.hover ? "pointer" : "grab";
   };
   cv.addEventListener("mousedown", e => start(e.clientX, e.clientY));
   window.addEventListener("mousemove", e => {
-    if (graph.open && !graph.drag) {
-      const r = cv.getBoundingClientRect();
-      graph.hover = graphNodeAt(e.clientX - r.left, e.clientY - r.top);
+    if (!graph.open) return;
+    if (!graph.drag) {
+      const rect = cv.getBoundingClientRect();
+      setGraphHover(graphNodeAt(e.clientX - rect.left, e.clientY - rect.top));
       cv.style.cursor = graph.hover ? "pointer" : "grab";
     }
     move(e.clientX, e.clientY);
   });
   window.addEventListener("mouseup", end);
+  cv.addEventListener("mouseleave", () => { if (!graph.drag) setGraphHover(null); });
   cv.addEventListener("wheel", e => {
     e.preventDefault();
-    const f = e.deltaY < 0 ? 1.12 : 0.89;
-    graph.cam.z = Math.min(4, Math.max(0.15, graph.cam.z * f));
+    graph.zoom = Math.min(2.35, Math.max(.52, graph.zoom * (e.deltaY < 0 ? 1.1 : .91)));
   }, { passive: false });
-  // touch
   cv.addEventListener("touchstart", e => {
     if (e.touches.length === 1) start(e.touches[0].clientX, e.touches[0].clientY);
-    else if (e.touches.length === 2) {
-      graph.drag = null;
-      graph.pinch = { d: dist2(e.touches), z: graph.cam.z };
-    }
+    else if (e.touches.length === 2) { graph.drag = null; graph.pinch = { d: touchDistance(e.touches), zoom: graph.zoom }; }
   }, { passive: true });
   cv.addEventListener("touchmove", e => {
     if (e.touches.length === 1 && graph.drag) move(e.touches[0].clientX, e.touches[0].clientY);
-    else if (e.touches.length === 2 && graph.pinch) {
-      const f = dist2(e.touches) / graph.pinch.d;
-      graph.cam.z = Math.min(4, Math.max(0.15, graph.pinch.z * f));
-    }
+    else if (e.touches.length === 2 && graph.pinch) graph.zoom = Math.min(2.35, Math.max(.52, graph.pinch.zoom * touchDistance(e.touches) / graph.pinch.d));
   }, { passive: true });
-  cv.addEventListener("touchend", e => { if (e.touches.length === 0) { end(); graph.pinch = null; } }, { passive: true });
-  function dist2(t) { const dx = t[0].clientX - t[1].clientX, dy = t[0].clientY - t[1].clientY; return Math.sqrt(dx * dx + dy * dy) || 1; }
+  cv.addEventListener("touchend", e => { if (!e.touches.length) { end(); graph.pinch = null; } }, { passive: true });
+  function touchDistance(touches) { const dx = touches[0].clientX - touches[1].clientX, dy = touches[0].clientY - touches[1].clientY; return Math.sqrt(dx * dx + dy * dy) || 1; }
 }
 
 /* ---------- wiring ---------- */
@@ -1178,6 +1385,11 @@ function wire() {
   $("btnNew").onclick = newNotePrompt;
   $("btnDaily").onclick = dailyNote;
   $("btnGraph").onclick = () => { graph.open ? closeGraph() : openGraph(); };
+  $("graphSpin").onclick = () => {
+    graph.auto = !graph.auto;
+    $("graphSpin").classList.toggle("on", graph.auto);
+    $("graphSpin").textContent = graph.auto ? "Auto-orbit" : "Orbit paused";
+  };
   $("graphClose").onclick = closeGraph;
   $("btnDelete").onclick = deleteCurrent;
   $("btnMove").onclick = moveCurrentPrompt;
@@ -1237,7 +1449,7 @@ wire();
 /* Node.js test hook */
 if (typeof module !== "undefined" && module.exports) {
   module.exports = { escapeHtml, baseName, extractWikilinks, extractTags, stripCode,
-    splitFrontmatter, resolveLink, renderMarkdown, buildIndex, searchVault, todayStr,
+    fileKind, isKnowledgeText, splitFrontmatter, resolveLink, renderMarkdown, buildIndex, searchVault, todayStr,
     applyTemplate, b64ToUtf8, utf8ToB64 };
 }
 </script>
